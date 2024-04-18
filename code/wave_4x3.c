@@ -478,7 +478,7 @@ void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, i
         if (mend > mbegin)
         {
 
-            applywave_avx(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+            applywave_avx(k, mend - mbegin, n, g, v + mbegin, ldv, ldg);
         }
     }
 }
