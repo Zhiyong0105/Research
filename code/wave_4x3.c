@@ -268,55 +268,55 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
         /*G(g+1,i)*/
         tmp_vec = v1_vec;
         v1_vec = _mm512_add_pd(_mm512_mul_pd(g2, tmp_vec), _mm512_mul_pd(s2, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v1_vec), _mm512_mul_pd(s2, tmp_vec));
+        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v2_vec), _mm512_mul_pd(s2, tmp_vec));
 
         /*G(g+2,i)*/
         tmp_vec = v2_vec;
         v2_vec = _mm512_add_pd(_mm512_mul_pd(g3, tmp_vec), _mm512_mul_pd(s3, v3_vec));
-        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v2_vec), _mm512_mul_pd(s3, tmp_vec));
+        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v3_vec), _mm512_mul_pd(s3, tmp_vec));
 
         /*G(g+3,i)*/
         tmp_vec = v3_vec;
         v3_vec = _mm512_add_pd(_mm512_mul_pd(g4, tmp_vec), _mm512_mul_pd(s4, v4_vec));
-        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v3_vec), _mm512_mul_pd(s4, tmp_vec));
+        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v4_vec), _mm512_mul_pd(s4, tmp_vec));
 
         /*G(g-1,i+1)*/
         _mm512_storeu_pd(v4, v4_vec);
         v4_vec = _mm512_loadu_pd(v5);
         tmp_vec = v4_vec;
         v4_vec = _mm512_add_pd(_mm512_mul_pd(g5, tmp_vec), _mm512_mul_pd(s5, v0_vec));
-        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v4_vec), _mm512_mul_pd(s5, tmp_vec));
+        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
 
         /*G(g,i+1)*/
         v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v0_vec), _mm512_mul_pd(s6, tmp_vec));
+        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
 
         /*G(g+1,i+1)*/
         v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v1_vec), _mm512_mul_pd(s7, tmp_vec));
+        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
 
         /*G(g+2,i+1)*/
         v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
-        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v2_vec), _mm512_mul_pd(s8, tmp_vec));
+        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
 
         /*G(g-2,i+2)*/
         _mm512_storeu_pd(v3, v3_vec);
         v3_vec = _mm512_loadu_pd(v6);
         tmp_vec = v3_vec;
         v3_vec = _mm512_add_pd(_mm512_mul_pd(g9, tmp_vec), _mm512_mul_pd(s9, v4_vec));
-        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v3_vec), _mm512_mul_pd(s9, tmp_vec));
+        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
 
         /*G(g-1,i+2)*/
         v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
-        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v4_vec), _mm512_mul_pd(s10, tmp_vec));
+        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
 
         /*G(g,i+2)*/
         v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v0_vec), _mm512_mul_pd(s11, tmp_vec));
+        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
 
         /*G(g+1,i+2)*/
         v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v1_vec), _mm512_mul_pd(s12, tmp_vec));
+        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
 
         _mm512_storeu_pd(v6, v3_vec);
         _mm512_storeu_pd(v5, v4_vec);
@@ -333,22 +333,22 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
         /*G(g+1,i)*/
         double tmp1 = *v1;
         *v1 = G[2 * i + (g + 1) * ldg] * tmp1 + G[2 * i + (g + 1) * ldg + 1] * (*v2);
-        *v2 = G[2 * i + (g + 1) * ldg] * (*v1) - G[2 * i + (g + 1) * ldg + 1] * tmp1;
+        *v2 = G[2 * i + (g + 1) * ldg] * (*v2) - G[2 * i + (g + 1) * ldg + 1] * tmp1;
 
         /*G(g+2,i)*/
         double tmp2 = *v2;
         *v2 = G[2 * i + (g + 2) * ldg] * tmp2 + G[2 * i + (g + 2) * ldg + 1] * (*v3);
-        *v3 = G[2 * i + (g + 2) * ldg] * (*v2) - G[2 * i + (g + 2) * ldg + 1] * tmp2;
+        *v3 = G[2 * i + (g + 2) * ldg] * (*v3) - G[2 * i + (g + 2) * ldg + 1] * tmp2;
 
         /*G(g+3,i)*/
         double tmp3 = *v3;
         *v3 = G[2 * i + (g + 3) * ldg] * tmp3 + G[2 * i + (g + 3) * ldg + 1] * (*v4);
-        *v4 = G[2 * i + (g + 3) * ldg] * (*v3) - G[2 * i + (g + 3) * ldg + 1] * tmp3;
+        *v4 = G[2 * i + (g + 3) * ldg] * (*v4) - G[2 * i + (g + 3) * ldg + 1] * tmp3;
 
         /*G(g-1,i+1)*/
         double tmp5 = *v5;
         *v5 = G[2 * (i + 1) + (g - 1) * ldg] * tmp5 + G[2 * (i + 1) + (g - 1) * ldg + 1] * (*v0);
-        *v0 = G[2 * (i + 1) + (g - 1) * ldg] * (*v5) - G[2 * (i + 1) + (g - 1) * ldg + 1] * tmp5;
+        *v0 = G[2 * (i + 1) + (g - 1) * ldg] * (*v0) - G[2 * (i + 1) + (g - 1) * ldg + 1] * tmp5;
 
         /*G(g,i+1)*/
         double tmp0_1 = *v0;
