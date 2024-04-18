@@ -386,113 +386,7 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
         *v2 = G[2 * (i + 2) + (g + 1) * ldg] * (*v2) - G[2 * (i + 2) + (g + 1) * ldg + 1] * tmp1_2;
     }
 }
-void applywavemx2_avx_2x3(int m, double gamma1, double gamma2, double gamma3, double gamma4, double gamma5, double gamma6,
-                          double sigma1, double sigma2, double sigma3, double sigma4, double sigma5, double sigma6,
-                          double *a, double *b, double *c, double *d, double *f)
-{
-    double *restrict ap = a;
-    double *restrict bp = b;
-    double *restrict cp = c;
-    double *restrict dp = d;
-    double *restrict fp = f;
-    
-    int m_iter = m / 4;
-    int m_left = m % 4;
-    __m256d gv1, gv2, gv3, gv4, gv5, gv6, sv1, sv2, sv3, sv4, sv5, sv6, bv, cv, dv, tv;
-    gv1 = _mm256_broadcast_sd(&gamma1);
-    gv2 = _mm256_broadcast_sd(&gamma2);
-    gv3 = _mm256_broadcast_sd(&gamma3);
-    gv4 = _mm256_broadcast_sd(&gamma4);
-    gv5 = _mm256_broadcast_sd(&gamma5);
-    gv6 = _mm256_broadcast_sd(&gamma6);
 
-    sv1 = _mm256_broadcast_sd(&sigma1);
-    sv2 = _mm256_broadcast_sd(&sigma2);
-    sv3 = _mm256_broadcast_sd(&sigma3);
-    sv4 = _mm256_broadcast_sd(&sigma4);
-    sv5 = _mm256_broadcast_sd(&sigma5);
-    sv6 = _mm256_broadcast_sd(&sigma6);
-    for (int i = 0; i < m_iter; i++, ap += 4, bp += 4, cp += 4, dp += 4, fp += 4)
-    {
-
-        bv = _mm256_loadu_pd(bp);
-        cv = _mm256_loadu_pd(cp);
-        dv = _mm256_loadu_pd(dp);
-
-        /*G(g,i)*/
-        tv = bv;
-        bv = _mm256_add_pd(_mm256_mul_pd(gv1, tv), _mm256_mul_pd(sv1, cv));
-        cv = _mm256_sub_pd(_mm256_mul_pd(gv1, cv), _mm256_mul_pd(sv1, tv));
-
-        /*G(g,i+1)*/
-        tv = cv;
-        cv = _mm256_add_pd(_mm256_mul_pd(gv2, tv), _mm256_mul_pd(sv2, dv));
-        dv = _mm256_sub_pd(_mm256_mul_pd(gv2, dv), _mm256_mul_pd(sv2, tv));
-
-        /*G(g-1,i+1)*/
-        _mm256_storeu_pd(dp, dv);
-        dv = _mm256_loadu_pd(ap);
-        tv = dv;
-        dv = _mm256_add_pd(_mm256_mul_pd(gv3, tv), _mm256_mul_pd(sv3, bv));
-        bv = _mm256_sub_pd(_mm256_mul_pd(gv3, bv), _mm256_mul_pd(sv3, tv));
-
-        /*G(g,i+1)*/
-        tv = bv;
-        bv = _mm256_add_pd(_mm256_mul_pd(gv4, tv), _mm256_mul_pd(sv4, cv));
-        cv = _mm256_sub_pd(_mm256_mul_pd(gv4, cv), _mm256_mul_pd(sv4, tv));
-
-        /*G(g-2,i+2)*/
-        _mm256_storeu_pd(cp, cv);
-        cv = _mm256_loadu_pd(fp);
-        tv = cv;
-        cv = _mm256_add_pd(_mm256_mul_pd(gv5, tv), _mm256_mul_pd(sv5, dv));
-        dv = _mm256_sub_pd(_mm256_mul_pd(gv5, dv), _mm256_mul_pd(sv5, tv));
-
-        /*G(g-1,i+2)*/
-        tv = dv;
-        dv = _mm256_add_pd(_mm256_mul_pd(gv6, tv), _mm256_mul_pd(sv6, bv));
-        bv = _mm256_sub_pd(_mm256_mul_pd(gv6, bv), _mm256_mul_pd(sv6, tv));
-
-        _mm256_storeu_pd(bp, bv);
-        _mm256_storeu_pd(fp, cv);
-        _mm256_storeu_pd(ap, dv);
-    }
-    for (int i = 0; i < m_left; i++, ap++, bp++, cp++, dp++, fp++)
-    {
-        // double tmp = *xp;
-        // *xp = gamma * tmp + sigma * (*yp);
-        // *yp = gamma * (*yp) - sigma * tmp;
-        /*G(g,i)*/
-        double tmp1 = *bp;
-        *bp = gamma1 * tmp1 + sigma1 * (*cp);
-        *cp = gamma1 * (*cp) - sigma1 * tmp1;
-
-        /*G(g+1,i)*/
-        double tmp2 = *cp;
-        *cp = gamma2 * tmp2 + sigma2 * (*dp);
-        *dp = gamma2 * (*dp) - sigma2 * tmp2;
-
-        /*G(g-1,i+1)*/
-        double tmp3 = *ap;
-        *ap = gamma3 * tmp3 + sigma3 * (*bp);
-        *bp = gamma3 * (*bp) - sigma3 * tmp3;
-
-        /*G(g,i+1)*/
-        double tmp4 = *bp;
-        *bp = gamma4 * tmp4 + sigma4 * (*cp);
-        *cp = gamma4 * (*cp) - sigma4 * tmp4;
-
-        /*G(g-2,i+2)*/
-        double tmp5 = *fp;
-        *fp = gamma5 * tmp5 + sigma5 * (*ap);
-        *ap = gamma5 * (*ap) - sigma5 * tmp5;
-
-        /*G(g-1,i+2)*/
-        double tmp6 = *ap;
-        *ap = gamma6 * tmp6 + sigma6 * (*bp);
-        *bp = gamma6 * (*bp) - sigma6 * tmp6;
-    }
-}
 
 void applywave_fusing_4x3(int k, int m, int n, double *G, double *V, int ldv, int ldg, int mx, int my)
 {
@@ -565,6 +459,29 @@ void dmatrix_vector_multiply_mt_4x3(int k, int m, int n, double *g, double *v, i
         }
     }
 }
+void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
+{
+#pragma omp parallel
+    {
+
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        // split m
+        int bm = (m + nt - 1) / nt;
+        // bm = (bm+3)/4*4;
+        bm = (bm + 7) / 8 * 8;
+        int mbegin = bm * id < m ? bm * id : m;
+        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+        // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+
+        if (mend > mbegin)
+        {
+
+            applywave_avx(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+        }
+    }
+}
 double *copyMatrix(double *v, int m, int n, int ldv)
 {
     double *tmp = (double *)malloc(sizeof(double) * ldv * n);
@@ -611,8 +528,7 @@ int main(int argc, char const *argv[])
     double *v = dmatrix(m, n, ldv);
     double *g = dmatrix(2 * k, n - 1, ldg);
     double *cv; // = dmatrix(m, n, ldv);
-    double tmp1 = 0, tmp2 = 0;
-    long long int t = 0;
+    
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
     for (int i = 0; i < 1; i++)
@@ -622,26 +538,21 @@ int main(int argc, char const *argv[])
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
-        dmatrix_vector_multiply_mt_4x3(k, m, n, g, v, ldv, ldg, 2, 3);
+        dmatrix_vector_multiply_mt_4x3(k, m, n, g, v, ldv, ldg, 4, 3);
         long long int t2 = i64time();
 
-        /*No fusing*/
-        // long long int t3 = i64time();
+        
+        
         // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // long long int t4 = i64time();
-
         // printf("%d\n", Check(v, cv, m, n, ldv));
+
+        
         double time1 = (t2 - t1) * 1e-9;
-        //   double time2 = (t4 - t3) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
-        tmp1 += (flop / time1) * 1e-9;
-        //   tmp2 += (flop / time2) * 1e-9;
         printf("4X3 %d %d %f %f %f\n", n, k, (flop / time1) * 1e-9, time1, x);
-        // printf("%f %f\n", (flop / time2) * 1e-9, time2);
+       
     }
-    // printf("===================\n");
-    // printf("%f,%f\n", tmp1 / 5.0, tmp2 / 5.0);
-    // _mm_free(v);
+   
     freedmatrix(v, m, n, ldv);
     freedmatrix(g, 2 * k, n - 1, ldg);
 
