@@ -9,6 +9,7 @@
 #include <pmmintrin.h>
 #include <immintrin.h>
 #include <sys/mman.h>
+#include "function.h"
 #define EPSILON 1e-12
 int64_t
 i64time()
@@ -191,286 +192,286 @@ void applywave_avx(int k, int m, int n, double *G, double *V, int ldv, int ldg)
         //  printf("\n");
     }
 }
-void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, int i)
-{
-    /* pointers for columns*/
-    double *restrict v0 = &V[g * ldv];
-    double *restrict v1 = &V[(g + 1) * ldv];
-    double *restrict v2 = &V[(g + 2) * ldv];
-    double *restrict v3 = &V[(g + 3) * ldv];
-    double *restrict v4 = &V[(g + 4) * ldv];
-    double *restrict v5 = &V[(g - 1) * ldv];
-    double *restrict v6 = &V[(g - 2) * ldv];
+// void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, int i)
+// {
+//     /* pointers for columns*/
+//     double *restrict v0 = &V[g * ldv];
+//     double *restrict v1 = &V[(g + 1) * ldv];
+//     double *restrict v2 = &V[(g + 2) * ldv];
+//     double *restrict v3 = &V[(g + 3) * ldv];
+//     double *restrict v4 = &V[(g + 4) * ldv];
+//     double *restrict v5 = &V[(g - 1) * ldv];
+//     double *restrict v6 = &V[(g - 2) * ldv];
 
-    /* Loop conditions*/
+//     /* Loop conditions*/
 
-    int m_iter = m / 8;
-    int m_left = m % 8;
+//     int m_iter = m / 8;
+//     int m_left = m % 8;
 
-    /*Registers arguments*/
-    __m512d g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12; // gamma
-    __m512d s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12; // sigma
+//     /*Registers arguments*/
+//     __m512d g1, g2, g3, g4, g5, g6, g7, g8, g9, g10, g11, g12; // gamma
+//     __m512d s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12; // sigma
 
-    /*columns arguments*/
-    __m512d v0_vec, v1_vec, v2_vec, v3_vec, v4_vec, tmp_vec;
+//     /*columns arguments*/
+//     __m512d v0_vec, v1_vec, v2_vec, v3_vec, v4_vec, tmp_vec;
 
-    /*Loading */
-    g1 = _mm512_set1_pd(G[2 * i + g * ldg]);     // G(g,i)
-    s1 = _mm512_set1_pd(G[2 * i + g * ldg + 1]); // G(g,i)
+//     /*Loading */
+//     g1 = _mm512_set1_pd(G[2 * i + g * ldg]);     // G(g,i)
+//     s1 = _mm512_set1_pd(G[2 * i + g * ldg + 1]); // G(g,i)
 
-    g2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg]);     // G(g+1,i)
-    s2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg + 1]); // G(g+1,i)
+//     g2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg]);     // G(g+1,i)
+//     s2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg + 1]); // G(g+1,i)
 
-    g3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg]);     // G(g+2,i)
-    s3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg + 1]); // G(g+2,i)
+//     g3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg]);     // G(g+2,i)
+//     s3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg + 1]); // G(g+2,i)
 
-    g4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg]);     // G(g+3,i)
-    s4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg + 1]); // G(g+3,i)
+//     g4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg]);     // G(g+3,i)
+//     s4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg + 1]); // G(g+3,i)
 
-    g5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg]);     // G(g-1,i+1)
-    s5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg + 1]); // G(g-1,i+1)
+//     g5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg]);     // G(g-1,i+1)
+//     s5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg + 1]); // G(g-1,i+1)
 
-    g6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg]);     // G(g,i+1)
-    s6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg + 1]); // G(g,i+1)
+//     g6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg]);     // G(g,i+1)
+//     s6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg + 1]); // G(g,i+1)
 
-    g7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg]);     // G(g+1,i+1)
-    s7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg + 1]); // G(g+1,i+1)
+//     g7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg]);     // G(g+1,i+1)
+//     s7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg + 1]); // G(g+1,i+1)
 
-    g8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg]);     // G(g+2,i+1)
-    s8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg + 1]); // G(g+2,i+1)
+//     g8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg]);     // G(g+2,i+1)
+//     s8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg + 1]); // G(g+2,i+1)
 
-    g9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg]);     // G(g-2,i+2)
-    s9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg + 1]); // G(g-2,i+2)
+//     g9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg]);     // G(g-2,i+2)
+//     s9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg + 1]); // G(g-2,i+2)
 
-    g10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg]);     // G(g-1,i+2)
-    s10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg + 1]); // G(g-1,i+2)
+//     g10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg]);     // G(g-1,i+2)
+//     s10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg + 1]); // G(g-1,i+2)
 
-    g11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg]);     // G(g,i+2)
-    s11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg + 1]); // G(g,i+2)
+//     g11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg]);     // G(g,i+2)
+//     s11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg + 1]); // G(g,i+2)
 
-    g12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg]);     // G(g+1,i+2)
-    s12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg + 1]); // G(g+1,i+2)
+//     g12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg]);     // G(g+1,i+2)
+//     s12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg + 1]); // G(g+1,i+2)
 
-    /*Loop*/
-    for (int j = 0; j < m_iter; j++, v0 += 8, v1 += 8, v2 += 8, v3 += 8, v4 += 8, v5 += 8, v6 += 8)
-    {
-        v0_vec = _mm512_loadu_pd(v0);
-        v1_vec = _mm512_loadu_pd(v1);
-        v2_vec = _mm512_loadu_pd(v2);
-        v3_vec = _mm512_loadu_pd(v3);
-        v4_vec = _mm512_loadu_pd(v4);
+//     /*Loop*/
+//     for (int j = 0; j < m_iter; j++, v0 += 8, v1 += 8, v2 += 8, v3 += 8, v4 += 8, v5 += 8, v6 += 8)
+//     {
+//         v0_vec = _mm512_loadu_pd(v0);
+//         v1_vec = _mm512_loadu_pd(v1);
+//         v2_vec = _mm512_loadu_pd(v2);
+//         v3_vec = _mm512_loadu_pd(v3);
+//         v4_vec = _mm512_loadu_pd(v4);
 
-        /*G(g,i)*/
-        tmp_vec = v0_vec;
-        v0_vec = _mm512_add_pd(_mm512_mul_pd(g1, tmp_vec), _mm512_mul_pd(s1, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g1, v1_vec), _mm512_mul_pd(s1, tmp_vec));
+//         /*G(g,i)*/
+//         tmp_vec = v0_vec;
+//         v0_vec = _mm512_add_pd(_mm512_mul_pd(g1, tmp_vec), _mm512_mul_pd(s1, v1_vec));
+//         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g1, v1_vec), _mm512_mul_pd(s1, tmp_vec));
 
-        /*G(g+1,i)*/
-        tmp_vec = v1_vec;
-        v1_vec = _mm512_add_pd(_mm512_mul_pd(g2, tmp_vec), _mm512_mul_pd(s2, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v2_vec), _mm512_mul_pd(s2, tmp_vec));
+//         /*G(g+1,i)*/
+//         tmp_vec = v1_vec;
+//         v1_vec = _mm512_add_pd(_mm512_mul_pd(g2, tmp_vec), _mm512_mul_pd(s2, v2_vec));
+//         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v2_vec), _mm512_mul_pd(s2, tmp_vec));
 
-        /*G(g+2,i)*/
-        tmp_vec = v2_vec;
-        v2_vec = _mm512_add_pd(_mm512_mul_pd(g3, tmp_vec), _mm512_mul_pd(s3, v3_vec));
-        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v3_vec), _mm512_mul_pd(s3, tmp_vec));
+//         /*G(g+2,i)*/
+//         tmp_vec = v2_vec;
+//         v2_vec = _mm512_add_pd(_mm512_mul_pd(g3, tmp_vec), _mm512_mul_pd(s3, v3_vec));
+//         v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v3_vec), _mm512_mul_pd(s3, tmp_vec));
 
-        /*G(g+3,i)*/
-        tmp_vec = v3_vec;
-        v3_vec = _mm512_add_pd(_mm512_mul_pd(g4, tmp_vec), _mm512_mul_pd(s4, v4_vec));
-        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v4_vec), _mm512_mul_pd(s4, tmp_vec));
+//         /*G(g+3,i)*/
+//         tmp_vec = v3_vec;
+//         v3_vec = _mm512_add_pd(_mm512_mul_pd(g4, tmp_vec), _mm512_mul_pd(s4, v4_vec));
+//         v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v4_vec), _mm512_mul_pd(s4, tmp_vec));
 
-        /*G(g-1,i+1)*/
-        _mm512_storeu_pd(v4, v4_vec);
-        v4_vec = _mm512_loadu_pd(v5);
-        tmp_vec = v4_vec;
-        v4_vec = _mm512_add_pd(_mm512_mul_pd(g5, tmp_vec), _mm512_mul_pd(s5, v0_vec));
-        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
+//         /*G(g-1,i+1)*/
+//         _mm512_storeu_pd(v4, v4_vec);
+//         v4_vec = _mm512_loadu_pd(v5);
+//         tmp_vec = v4_vec;
+//         v4_vec = _mm512_add_pd(_mm512_mul_pd(g5, tmp_vec), _mm512_mul_pd(s5, v0_vec));
+//         v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
 
-        /*G(g,i+1)*/
-        tmp_vec = v0_vec;
-        v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
+//         /*G(g,i+1)*/
+//         tmp_vec = v0_vec;
+//         v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
+//         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
 
-        /*G(g+1,i+1)*/
-        tmp_vec = v1_vec;
-        v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
+//         /*G(g+1,i+1)*/
+//         tmp_vec = v1_vec;
+//         v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
+//         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
 
-        /*G(g+2,i+1)*/
-        tmp_vec = v2_vec;
-        v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
-        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
+//         /*G(g+2,i+1)*/
+//         tmp_vec = v2_vec;
+//         v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
+//         v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
 
-        /*G(g-2,i+2)*/
-        _mm512_storeu_pd(v3, v3_vec);
-        v3_vec = _mm512_loadu_pd(v6);
-        tmp_vec = v3_vec;
-        v3_vec = _mm512_add_pd(_mm512_mul_pd(g9, tmp_vec), _mm512_mul_pd(s9, v4_vec));
-        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
+//         /*G(g-2,i+2)*/
+//         _mm512_storeu_pd(v3, v3_vec);
+//         v3_vec = _mm512_loadu_pd(v6);
+//         tmp_vec = v3_vec;
+//         v3_vec = _mm512_add_pd(_mm512_mul_pd(g9, tmp_vec), _mm512_mul_pd(s9, v4_vec));
+//         v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
 
-        /*G(g-1,i+2)*/
-        tmp_vec = v4_vec;
-        v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
-        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
+//         /*G(g-1,i+2)*/
+//         tmp_vec = v4_vec;
+//         v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
+//         v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
 
-        /*G(g,i+2)*/
-        tmp_vec = v0_vec;
-        v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
+//         /*G(g,i+2)*/
+//         tmp_vec = v0_vec;
+//         v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
+//         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
 
-        /*G(g+1,i+2)*/
-        tmp_vec = v1_vec;
-        v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
+//         /*G(g+1,i+2)*/
+//         tmp_vec = v1_vec;
+//         v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
+//         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
 
-        _mm512_storeu_pd(v6, v3_vec);
-        _mm512_storeu_pd(v5, v4_vec);
-        _mm512_storeu_pd(v0, v0_vec);
-        _mm512_storeu_pd(v1, v1_vec);
-        _mm512_storeu_pd(v2, v2_vec);
-    }
-    if (m_left > 0)
-    {
-        __mmask8 mask = (__mmask8)(255 >> (8 - m_left));
-        v0_vec = _mm512_maskz_loadu_pd(mask, v0);
-        v1_vec = _mm512_maskz_loadu_pd(mask, v1);
-        v2_vec = _mm512_maskz_loadu_pd(mask, v2);
-        v3_vec = _mm512_maskz_loadu_pd(mask, v3);
-        v4_vec = _mm512_maskz_loadu_pd(mask, v4);
-        /*G(g,i)*/
-        tmp_vec = v0_vec;
-        v0_vec = _mm512_add_pd(_mm512_mul_pd(g1, tmp_vec), _mm512_mul_pd(s1, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g1, v1_vec), _mm512_mul_pd(s1, tmp_vec));
+//         _mm512_storeu_pd(v6, v3_vec);
+//         _mm512_storeu_pd(v5, v4_vec);
+//         _mm512_storeu_pd(v0, v0_vec);
+//         _mm512_storeu_pd(v1, v1_vec);
+//         _mm512_storeu_pd(v2, v2_vec);
+//     }
+//     if (m_left > 0)
+//     {
+//         __mmask8 mask = (__mmask8)(255 >> (8 - m_left));
+//         v0_vec = _mm512_maskz_loadu_pd(mask, v0);
+//         v1_vec = _mm512_maskz_loadu_pd(mask, v1);
+//         v2_vec = _mm512_maskz_loadu_pd(mask, v2);
+//         v3_vec = _mm512_maskz_loadu_pd(mask, v3);
+//         v4_vec = _mm512_maskz_loadu_pd(mask, v4);
+//         /*G(g,i)*/
+//         tmp_vec = v0_vec;
+//         v0_vec = _mm512_add_pd(_mm512_mul_pd(g1, tmp_vec), _mm512_mul_pd(s1, v1_vec));
+//         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g1, v1_vec), _mm512_mul_pd(s1, tmp_vec));
 
-        /*G(g+1,i)*/
-        tmp_vec = v1_vec;
-        v1_vec = _mm512_add_pd(_mm512_mul_pd(g2, tmp_vec), _mm512_mul_pd(s2, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v2_vec), _mm512_mul_pd(s2, tmp_vec));
+//         /*G(g+1,i)*/
+//         tmp_vec = v1_vec;
+//         v1_vec = _mm512_add_pd(_mm512_mul_pd(g2, tmp_vec), _mm512_mul_pd(s2, v2_vec));
+//         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v2_vec), _mm512_mul_pd(s2, tmp_vec));
 
-        /*G(g+2,i)*/
-        tmp_vec = v2_vec;
-        v2_vec = _mm512_add_pd(_mm512_mul_pd(g3, tmp_vec), _mm512_mul_pd(s3, v3_vec));
-        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v3_vec), _mm512_mul_pd(s3, tmp_vec));
+//         /*G(g+2,i)*/
+//         tmp_vec = v2_vec;
+//         v2_vec = _mm512_add_pd(_mm512_mul_pd(g3, tmp_vec), _mm512_mul_pd(s3, v3_vec));
+//         v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v3_vec), _mm512_mul_pd(s3, tmp_vec));
 
-        /*G(g+3,i)*/
-        tmp_vec = v3_vec;
-        v3_vec = _mm512_add_pd(_mm512_mul_pd(g4, tmp_vec), _mm512_mul_pd(s4, v4_vec));
-        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v4_vec), _mm512_mul_pd(s4, tmp_vec));
+//         /*G(g+3,i)*/
+//         tmp_vec = v3_vec;
+//         v3_vec = _mm512_add_pd(_mm512_mul_pd(g4, tmp_vec), _mm512_mul_pd(s4, v4_vec));
+//         v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v4_vec), _mm512_mul_pd(s4, tmp_vec));
 
-        /*G(g-1,i+1)*/
-        _mm512_mask_storeu_pd(v4, mask, v4_vec);
-        v4_vec = _mm512_maskz_loadu_pd(mask, v5);
-        tmp_vec = v4_vec;
-        v4_vec = _mm512_add_pd(_mm512_mul_pd(g5, tmp_vec), _mm512_mul_pd(s5, v0_vec));
-        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
+//         /*G(g-1,i+1)*/
+//         _mm512_mask_storeu_pd(v4, mask, v4_vec);
+//         v4_vec = _mm512_maskz_loadu_pd(mask, v5);
+//         tmp_vec = v4_vec;
+//         v4_vec = _mm512_add_pd(_mm512_mul_pd(g5, tmp_vec), _mm512_mul_pd(s5, v0_vec));
+//         v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
 
-        /*G(g,i+1)*/
-        tmp_vec = v0_vec;
-        v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
+//         /*G(g,i+1)*/
+//         tmp_vec = v0_vec;
+//         v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
+//         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
 
-        /*G(g+1,i+1)*/
-        tmp_vec = v1_vec;
-        v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
+//         /*G(g+1,i+1)*/
+//         tmp_vec = v1_vec;
+//         v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
+//         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
 
-        /*G(g+2,i+1)*/
-        tmp_vec = v2_vec;
-        v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
-        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
+//         /*G(g+2,i+1)*/
+//         tmp_vec = v2_vec;
+//         v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
+//         v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
 
-        /*G(g-2,i+2)*/
-        _mm512_mask_storeu_pd(v3, mask, v3_vec);
-        v3_vec = _mm512_maskz_loadu_pd(mask, v6);
-        tmp_vec = v3_vec;
-        v3_vec = _mm512_add_pd(_mm512_mul_pd(g9, tmp_vec), _mm512_mul_pd(s9, v4_vec));
-        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
+//         /*G(g-2,i+2)*/
+//         _mm512_mask_storeu_pd(v3, mask, v3_vec);
+//         v3_vec = _mm512_maskz_loadu_pd(mask, v6);
+//         tmp_vec = v3_vec;
+//         v3_vec = _mm512_add_pd(_mm512_mul_pd(g9, tmp_vec), _mm512_mul_pd(s9, v4_vec));
+//         v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
 
-        /*G(g-1,i+2)*/
-        tmp_vec = v4_vec;
-        v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
-        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
+//         /*G(g-1,i+2)*/
+//         tmp_vec = v4_vec;
+//         v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
+//         v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
 
-        /*G(g,i+2)*/
-        tmp_vec = v0_vec;
-        v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
-        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
+//         /*G(g,i+2)*/
+//         tmp_vec = v0_vec;
+//         v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
+//         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
 
-        /*G(g+1,i+2)*/
-        tmp_vec = v1_vec;
-        v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
-        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
+//         /*G(g+1,i+2)*/
+//         tmp_vec = v1_vec;
+//         v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
+//         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
 
-        _mm512_mask_storeu_pd(v6, mask, v3_vec);
-        _mm512_mask_storeu_pd(v5, mask, v4_vec);
-        _mm512_mask_storeu_pd(v0, mask, v0_vec);
-        _mm512_mask_storeu_pd(v1, mask, v1_vec);
-        _mm512_mask_storeu_pd(v2, mask, v2_vec);
-    }
-    // for (int j = 0; j < m_left; j++, v0 += 1, v1 += 1, v2 += 1, v3 += 1, v4 += 1, v5 += 1, v6 += 1)
-    // {
-    //     /*G(g,i)*/
-    //     double tmp0 = *v0;
-    //     *v0 = G[2 * i + g * ldg] * tmp0 + G[2 * i + g * ldg + 1] * (*v1);
-    //     *v1 = G[2 * i + g * ldg] * (*v1) - G[2 * i + g * ldg + 1] * tmp0;
+//         _mm512_mask_storeu_pd(v6, mask, v3_vec);
+//         _mm512_mask_storeu_pd(v5, mask, v4_vec);
+//         _mm512_mask_storeu_pd(v0, mask, v0_vec);
+//         _mm512_mask_storeu_pd(v1, mask, v1_vec);
+//         _mm512_mask_storeu_pd(v2, mask, v2_vec);
+//     }
+//     // for (int j = 0; j < m_left; j++, v0 += 1, v1 += 1, v2 += 1, v3 += 1, v4 += 1, v5 += 1, v6 += 1)
+//     // {
+//     //     /*G(g,i)*/
+//     //     double tmp0 = *v0;
+//     //     *v0 = G[2 * i + g * ldg] * tmp0 + G[2 * i + g * ldg + 1] * (*v1);
+//     //     *v1 = G[2 * i + g * ldg] * (*v1) - G[2 * i + g * ldg + 1] * tmp0;
 
-    //     /*G(g+1,i)*/
-    //     double tmp1 = *v1;
-    //     *v1 = G[2 * i + (g + 1) * ldg] * tmp1 + G[2 * i + (g + 1) * ldg + 1] * (*v2);
-    //     *v2 = G[2 * i + (g + 1) * ldg] * (*v2) - G[2 * i + (g + 1) * ldg + 1] * tmp1;
+//     //     /*G(g+1,i)*/
+//     //     double tmp1 = *v1;
+//     //     *v1 = G[2 * i + (g + 1) * ldg] * tmp1 + G[2 * i + (g + 1) * ldg + 1] * (*v2);
+//     //     *v2 = G[2 * i + (g + 1) * ldg] * (*v2) - G[2 * i + (g + 1) * ldg + 1] * tmp1;
 
-    //     /*G(g+2,i)*/
-    //     double tmp2 = *v2;
-    //     *v2 = G[2 * i + (g + 2) * ldg] * tmp2 + G[2 * i + (g + 2) * ldg + 1] * (*v3);
-    //     *v3 = G[2 * i + (g + 2) * ldg] * (*v3) - G[2 * i + (g + 2) * ldg + 1] * tmp2;
+//     //     /*G(g+2,i)*/
+//     //     double tmp2 = *v2;
+//     //     *v2 = G[2 * i + (g + 2) * ldg] * tmp2 + G[2 * i + (g + 2) * ldg + 1] * (*v3);
+//     //     *v3 = G[2 * i + (g + 2) * ldg] * (*v3) - G[2 * i + (g + 2) * ldg + 1] * tmp2;
 
-    //     /*G(g+3,i)*/
-    //     double tmp3 = *v3;
-    //     *v3 = G[2 * i + (g + 3) * ldg] * tmp3 + G[2 * i + (g + 3) * ldg + 1] * (*v4);
-    //     *v4 = G[2 * i + (g + 3) * ldg] * (*v4) - G[2 * i + (g + 3) * ldg + 1] * tmp3;
+//     //     /*G(g+3,i)*/
+//     //     double tmp3 = *v3;
+//     //     *v3 = G[2 * i + (g + 3) * ldg] * tmp3 + G[2 * i + (g + 3) * ldg + 1] * (*v4);
+//     //     *v4 = G[2 * i + (g + 3) * ldg] * (*v4) - G[2 * i + (g + 3) * ldg + 1] * tmp3;
 
-    //     /*G(g-1,i+1)*/
-    //     double tmp5 = *v5;
-    //     *v5 = G[2 * (i + 1) + (g - 1) * ldg] * tmp5 + G[2 * (i + 1) + (g - 1) * ldg + 1] * (*v0);
-    //     *v0 = G[2 * (i + 1) + (g - 1) * ldg] * (*v0) - G[2 * (i + 1) + (g - 1) * ldg + 1] * tmp5;
+//     //     /*G(g-1,i+1)*/
+//     //     double tmp5 = *v5;
+//     //     *v5 = G[2 * (i + 1) + (g - 1) * ldg] * tmp5 + G[2 * (i + 1) + (g - 1) * ldg + 1] * (*v0);
+//     //     *v0 = G[2 * (i + 1) + (g - 1) * ldg] * (*v0) - G[2 * (i + 1) + (g - 1) * ldg + 1] * tmp5;
 
-    //     /*G(g,i+1)*/
-    //     double tmp0_1 = *v0;
-    //     *v0 = G[2 * (i + 1) + g * ldg] * tmp0_1 + G[2 * (i + 1) + g * ldg + 1] * (*v1);
-    //     *v1 = G[2 * (i + 1) + g * ldg] * (*v1) - G[2 * (i + 1) + g * ldg + 1] * tmp0_1;
+//     //     /*G(g,i+1)*/
+//     //     double tmp0_1 = *v0;
+//     //     *v0 = G[2 * (i + 1) + g * ldg] * tmp0_1 + G[2 * (i + 1) + g * ldg + 1] * (*v1);
+//     //     *v1 = G[2 * (i + 1) + g * ldg] * (*v1) - G[2 * (i + 1) + g * ldg + 1] * tmp0_1;
 
-    //     /*G(g+1,i+1)*/
-    //     double tmp1_1 = *v1;
-    //     *v1 = G[2 * (i + 1) + (g + 1) * ldg] * tmp1_1 + G[2 * (i + 1) + (g + 1) * ldg + 1] * (*v2);
-    //     *v2 = G[2 * (i + 1) + (g + 1) * ldg] * (*v2) - G[2 * (i + 1) + (g + 1) * ldg + 1] * tmp1_1;
+//     //     /*G(g+1,i+1)*/
+//     //     double tmp1_1 = *v1;
+//     //     *v1 = G[2 * (i + 1) + (g + 1) * ldg] * tmp1_1 + G[2 * (i + 1) + (g + 1) * ldg + 1] * (*v2);
+//     //     *v2 = G[2 * (i + 1) + (g + 1) * ldg] * (*v2) - G[2 * (i + 1) + (g + 1) * ldg + 1] * tmp1_1;
 
-    //     /*G(g+2,i+1)*/
-    //     double tmp2_1 = *v2;
-    //     *v2 = G[2 * (i + 1) + (g + 2) * ldg] * tmp2_1 + G[2 * (i + 1) + (g + 2) * ldg + 1] * (*v3);
-    //     *v3 = G[2 * (i + 1) + (g + 2) * ldg] * (*v3) - G[2 * (i + 1) + (g + 2) * ldg + 1] * tmp2_1;
+//     //     /*G(g+2,i+1)*/
+//     //     double tmp2_1 = *v2;
+//     //     *v2 = G[2 * (i + 1) + (g + 2) * ldg] * tmp2_1 + G[2 * (i + 1) + (g + 2) * ldg + 1] * (*v3);
+//     //     *v3 = G[2 * (i + 1) + (g + 2) * ldg] * (*v3) - G[2 * (i + 1) + (g + 2) * ldg + 1] * tmp2_1;
 
-    //     /*G(g-2,i+2)*/
-    //     double tmp6 = *v6;
-    //     *v6 = G[2 * (i + 2) + (g - 2) * ldg] * tmp6 + G[2 * (i + 2) + (g - 2) * ldg + 1] * (*v5);
-    //     *v5 = G[2 * (i + 2) + (g - 2) * ldg] * (*v5) - G[2 * (i + 2) + (g - 2) * ldg + 1] * tmp6;
+//     //     /*G(g-2,i+2)*/
+//     //     double tmp6 = *v6;
+//     //     *v6 = G[2 * (i + 2) + (g - 2) * ldg] * tmp6 + G[2 * (i + 2) + (g - 2) * ldg + 1] * (*v5);
+//     //     *v5 = G[2 * (i + 2) + (g - 2) * ldg] * (*v5) - G[2 * (i + 2) + (g - 2) * ldg + 1] * tmp6;
 
-    //     /*G(g-1,i+2)*/
-    //     double tmp5_1 = *v5;
-    //     *v5 = G[2 * (i + 2) + (g - 1) * ldg] * tmp5_1 + G[2 * (i + 2) + (g - 1) * ldg + 1] * (*v0);
-    //     *v0 = G[2 * (i + 2) + (g - 1) * ldg] * (*v0) - G[2 * (i + 2) + (g - 1) * ldg + 1] * tmp5_1;
+//     //     /*G(g-1,i+2)*/
+//     //     double tmp5_1 = *v5;
+//     //     *v5 = G[2 * (i + 2) + (g - 1) * ldg] * tmp5_1 + G[2 * (i + 2) + (g - 1) * ldg + 1] * (*v0);
+//     //     *v0 = G[2 * (i + 2) + (g - 1) * ldg] * (*v0) - G[2 * (i + 2) + (g - 1) * ldg + 1] * tmp5_1;
 
-    //     /*G(g,i+2)*/
-    //     double tmp0_2 = *v0;
-    //     *v0 = G[2 * (i + 2) + g * ldg] * tmp0_2 + G[2 * (i + 2) + g * ldg + 1] * (*v1);
-    //     *v1 = G[2 * (i + 2) + g * ldg] * (*v1) - G[2 * (i + 2) + g * ldg + 1] * tmp0_2;
+//     //     /*G(g,i+2)*/
+//     //     double tmp0_2 = *v0;
+//     //     *v0 = G[2 * (i + 2) + g * ldg] * tmp0_2 + G[2 * (i + 2) + g * ldg + 1] * (*v1);
+//     //     *v1 = G[2 * (i + 2) + g * ldg] * (*v1) - G[2 * (i + 2) + g * ldg + 1] * tmp0_2;
 
-    //     /*G(g+1,i+2)*/
-    //     double tmp1_2 = *v1;
-    //     *v1 = G[2 * (i + 2) + (g + 1) * ldg] * tmp1_2 + G[2 * (i + 2) + (g + 1) * ldg + 1] * (*v2);
-    //     *v2 = G[2 * (i + 2) + (g + 1) * ldg] * (*v2) - G[2 * (i + 2) + (g + 1) * ldg + 1] * tmp1_2;
-    // }
-}
+//     //     /*G(g+1,i+2)*/
+//     //     double tmp1_2 = *v1;
+//     //     *v1 = G[2 * (i + 2) + (g + 1) * ldg] * tmp1_2 + G[2 * (i + 2) + (g + 1) * ldg + 1] * (*v2);
+//     //     *v2 = G[2 * (i + 2) + (g + 1) * ldg] * (*v2) - G[2 * (i + 2) + (g + 1) * ldg + 1] * tmp1_2;
+//     // }
+// }
 
 void applywave_fusing_4x3(int k, int m, int n, double *G, double *V, int ldv, int ldg, int mx, int my)
 {
@@ -587,8 +588,8 @@ int Check(double *v, double *vc, int m, int n, int ldv)
             // if ((v[i + j * ldv] != vc[i + j * ldv]) > EPSILON)
             if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
-                printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                // return 0;
+               // printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
+                 return 0;
             }
         }
     }
