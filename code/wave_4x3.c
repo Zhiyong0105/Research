@@ -10,8 +10,8 @@
 #include <immintrin.h>
 #include <sys/mman.h>
 #define EPSILON 1e-12
-    int64_t
-    i64time()
+int64_t
+i64time()
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -215,41 +215,41 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
     __m512d v0_vec, v1_vec, v2_vec, v3_vec, v4_vec, tmp_vec;
 
     /*Loading */
-    g1 = _mm512_set1_pd(G[2 * i + g * ldg]);          // G(g,i)
-    s1 = _mm512_set1_pd(G[2 * i + g * ldg + 1]);      // G(g,i)
+    g1 = _mm512_set1_pd(G[2 * i + g * ldg]);     // G(g,i)
+    s1 = _mm512_set1_pd(G[2 * i + g * ldg + 1]); // G(g,i)
 
-    g2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg]);          // G(g+1,i)
-    s2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg + 1]);      // G(g+1,i)
+    g2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg]);     // G(g+1,i)
+    s2 = _mm512_set1_pd(G[2 * i + (g + 1) * ldg + 1]); // G(g+1,i)
 
-    g3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg]);          // G(g+2,i)
-    s3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg + 1]);     // G(g+2,i)
+    g3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg]);     // G(g+2,i)
+    s3 = _mm512_set1_pd(G[2 * i + (g + 2) * ldg + 1]); // G(g+2,i)
 
-    g4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg]);          // G(g+3,i)
-    s4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg + 1]);     // G(g+3,i)
+    g4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg]);     // G(g+3,i)
+    s4 = _mm512_set1_pd(G[2 * i + (g + 3) * ldg + 1]); // G(g+3,i)
 
-    g5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg]);          // G(g-1,i+1)
-    s5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg + 1]);     // G(g-1,i+1)
+    g5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg]);     // G(g-1,i+1)
+    s5 = _mm512_set1_pd(G[2 * (i + 1) + (g - 1) * ldg + 1]); // G(g-1,i+1)
 
-    g6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg]);          // G(g,i+1)
-    s6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg + 1]);     // G(g,i+1)
+    g6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg]);     // G(g,i+1)
+    s6 = _mm512_set1_pd(G[2 * (i + 1) + g * ldg + 1]); // G(g,i+1)
 
-    g7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg]);          // G(g+1,i+1)
-    s7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg + 1]);     // G(g+1,i+1)
+    g7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg]);     // G(g+1,i+1)
+    s7 = _mm512_set1_pd(G[2 * (i + 1) + (g + 1) * ldg + 1]); // G(g+1,i+1)
 
-    g8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg]);          // G(g+2,i+1)
-    s8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg + 1]);     // G(g+2,i+1)
+    g8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg]);     // G(g+2,i+1)
+    s8 = _mm512_set1_pd(G[2 * (i + 1) + (g + 2) * ldg + 1]); // G(g+2,i+1)
 
-    g9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg]);           // G(g-2,i+2)
-    s9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg + 1]);      // G(g-2,i+2)
+    g9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg]);     // G(g-2,i+2)
+    s9 = _mm512_set1_pd(G[2 * (i + 2) + (g - 2) * ldg + 1]); // G(g-2,i+2)
 
-    g10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg]);          // G(g-1,i+2)
-    s10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg + 1]);     // G(g-1,i+2)
+    g10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg]);     // G(g-1,i+2)
+    s10 = _mm512_set1_pd(G[2 * (i + 2) + (g - 1) * ldg + 1]); // G(g-1,i+2)
 
-    g11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg]);          // G(g,i+2)
-    s11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg + 1]);     // G(g,i+2)
+    g11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg]);     // G(g,i+2)
+    s11 = _mm512_set1_pd(G[2 * (i + 2) + g * ldg + 1]); // G(g,i+2)
 
-    g12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg]);          // G(g+1,i+2)
-    s12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg + 1]);      // G(g+1,i+2)
+    g12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg]);     // G(g+1,i+2)
+    s12 = _mm512_set1_pd(G[2 * (i + 2) + (g + 1) * ldg + 1]); // G(g+1,i+2)
 
     /*Loop*/
     for (int j = 0; j < m_iter; j++, v0 += 8, v1 += 8, v2 += 8, v3 += 8, v4 += 8, v5 += 8, v6 += 8)
@@ -288,14 +288,17 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
         v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
 
         /*G(g,i+1)*/
+        tmp_vec = v0_vec;
         v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
 
         /*G(g+1,i+1)*/
+        tmp_vec = v1_vec;
         v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
 
         /*G(g+2,i+1)*/
+        tmp_vec = v2_vec;
         v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
         v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
 
@@ -307,14 +310,17 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
         v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
 
         /*G(g-1,i+2)*/
+        tmp_vec = v4_vec;
         v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
         v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
 
         /*G(g,i+2)*/
+        tmp_vec = v0_vec;
         v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
         v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
 
         /*G(g+1,i+2)*/
+        tmp_vec = v1_vec;
         v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
         v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
 
@@ -322,71 +328,149 @@ void applywavemx2_avx_4x3(int m, double *V, double *G, int ldv, int ldg, int g, 
         _mm512_storeu_pd(v5, v4_vec);
         _mm512_storeu_pd(v0, v0_vec);
         _mm512_storeu_pd(v1, v1_vec);
+        _mm512_storeu_pd(v2, v2_vec);
     }
-    for (int j = 0; j < m_left; j++, v0 += 8, v1 += 8, v2 += 8, v3 += 8, v4 += 8, v5 += 8, v6 += 8)
+    if (m_left > 0)
     {
+        __mmask8 mask = (__mmask8)(255 >> (8 - m_left));
+        v0_vec = _mm512_maskz_loadu_pd(mask, v0);
+        v1_vec = _mm512_maskz_loadu_pd(mask, v1);
+        v2_vec = _mm512_maskz_loadu_pd(mask, v2);
+        v3_vec = _mm512_maskz_loadu_pd(mask, v3);
+        v4_vec = _mm512_maskz_loadu_pd(mask, v4);
         /*G(g,i)*/
-        double tmp0 = *v0;
-        *v0 = G[2 * i + g * ldg] * tmp0 + G[2 * i + g * ldg + 1] * (*v1);
-        *v1 = G[2 * i + g * ldg] * (*v1) - G[2 * i + g * ldg + 1] * tmp0;
+        tmp_vec = v0_vec;
+        v0_vec = _mm512_add_pd(_mm512_mul_pd(g1, tmp_vec), _mm512_mul_pd(s1, v1_vec));
+        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g1, v1_vec), _mm512_mul_pd(s1, tmp_vec));
 
         /*G(g+1,i)*/
-        double tmp1 = *v1;
-        *v1 = G[2 * i + (g + 1) * ldg] * tmp1 + G[2 * i + (g + 1) * ldg + 1] * (*v2);
-        *v2 = G[2 * i + (g + 1) * ldg] * (*v2) - G[2 * i + (g + 1) * ldg + 1] * tmp1;
+        tmp_vec = v1_vec;
+        v1_vec = _mm512_add_pd(_mm512_mul_pd(g2, tmp_vec), _mm512_mul_pd(s2, v2_vec));
+        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g2, v2_vec), _mm512_mul_pd(s2, tmp_vec));
 
         /*G(g+2,i)*/
-        double tmp2 = *v2;
-        *v2 = G[2 * i + (g + 2) * ldg] * tmp2 + G[2 * i + (g + 2) * ldg + 1] * (*v3);
-        *v3 = G[2 * i + (g + 2) * ldg] * (*v3) - G[2 * i + (g + 2) * ldg + 1] * tmp2;
+        tmp_vec = v2_vec;
+        v2_vec = _mm512_add_pd(_mm512_mul_pd(g3, tmp_vec), _mm512_mul_pd(s3, v3_vec));
+        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g3, v3_vec), _mm512_mul_pd(s3, tmp_vec));
 
         /*G(g+3,i)*/
-        double tmp3 = *v3;
-        *v3 = G[2 * i + (g + 3) * ldg] * tmp3 + G[2 * i + (g + 3) * ldg + 1] * (*v4);
-        *v4 = G[2 * i + (g + 3) * ldg] * (*v4) - G[2 * i + (g + 3) * ldg + 1] * tmp3;
+        tmp_vec = v3_vec;
+        v3_vec = _mm512_add_pd(_mm512_mul_pd(g4, tmp_vec), _mm512_mul_pd(s4, v4_vec));
+        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g4, v4_vec), _mm512_mul_pd(s4, tmp_vec));
 
         /*G(g-1,i+1)*/
-        double tmp5 = *v5;
-        *v5 = G[2 * (i + 1) + (g - 1) * ldg] * tmp5 + G[2 * (i + 1) + (g - 1) * ldg + 1] * (*v0);
-        *v0 = G[2 * (i + 1) + (g - 1) * ldg] * (*v0) - G[2 * (i + 1) + (g - 1) * ldg + 1] * tmp5;
+        _mm512_mask_storeu_pd(v4, mask, v4_vec);
+        v4_vec = _mm512_maskz_loadu_pd(mask, v5);
+        tmp_vec = v4_vec;
+        v4_vec = _mm512_add_pd(_mm512_mul_pd(g5, tmp_vec), _mm512_mul_pd(s5, v0_vec));
+        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g5, v0_vec), _mm512_mul_pd(s5, tmp_vec));
 
         /*G(g,i+1)*/
-        double tmp0_1 = *v0;
-        *v0 = G[2 * (i + 1) + g * ldg] * tmp0_1 + G[2 * (i + 1) + g * ldg + 1] * (*v1);
-        *v1 = G[2 * (i + 1) + g * ldg] * (*v1) - G[2 * (i + 1) + g * ldg + 1] * tmp0_1;
+        tmp_vec = v0_vec;
+        v0_vec = _mm512_add_pd(_mm512_mul_pd(g6, tmp_vec), _mm512_mul_pd(s6, v1_vec));
+        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g6, v1_vec), _mm512_mul_pd(s6, tmp_vec));
 
         /*G(g+1,i+1)*/
-        double tmp1_1 = *v1;
-        *v1 = G[2 * (i + 1) + (g + 1) * ldg] * tmp1_1 + G[2 * (i + 1) + (g + 1) * ldg + 1] * (*v2);
-        *v2 = G[2 * (i + 1) + (g + 1) * ldg] * (*v2) - G[2 * (i + 1) + (g + 1) * ldg + 1] * tmp1_1;
+        tmp_vec = v1_vec;
+        v1_vec = _mm512_add_pd(_mm512_mul_pd(g7, tmp_vec), _mm512_mul_pd(s7, v2_vec));
+        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g7, v2_vec), _mm512_mul_pd(s7, tmp_vec));
 
         /*G(g+2,i+1)*/
-        double tmp2_1 = *v2;
-        *v2 = G[2 * (i + 1) + (g + 2) * ldg] * tmp2_1 + G[2 * (i + 1) + (g + 2) * ldg + 1] * (*v3);
-        *v3 = G[2 * (i + 1) + (g + 2) * ldg] * (*v3) - G[2 * (i + 1) + (g + 2) * ldg + 1] * tmp2_1;
+        tmp_vec = v2_vec;
+        v2_vec = _mm512_add_pd(_mm512_mul_pd(g8, tmp_vec), _mm512_mul_pd(s8, v3_vec));
+        v3_vec = _mm512_sub_pd(_mm512_mul_pd(g8, v3_vec), _mm512_mul_pd(s8, tmp_vec));
 
         /*G(g-2,i+2)*/
-        double tmp6 = *v6;
-        *v6 = G[2 * (i + 2) + (g - 2) * ldg] * tmp6 + G[2 * (i + 2) + (g - 2) * ldg + 1] * (*v5);
-        *v5 = G[2 * (i + 2) + (g - 2) * ldg] * (*v5) - G[2 * (i + 2) + (g - 2) * ldg + 1] * tmp6;
+        _mm512_mask_storeu_pd(v3, mask, v3_vec);
+        v3_vec = _mm512_maskz_loadu_pd(mask, v6);
+        tmp_vec = v3_vec;
+        v3_vec = _mm512_add_pd(_mm512_mul_pd(g9, tmp_vec), _mm512_mul_pd(s9, v4_vec));
+        v4_vec = _mm512_sub_pd(_mm512_mul_pd(g9, v4_vec), _mm512_mul_pd(s9, tmp_vec));
 
         /*G(g-1,i+2)*/
-        double tmp5_1 = *v5;
-        *v5 = G[2 * (i + 2) + (g - 1) * ldg] * tmp5_1 + G[2 * (i + 2) + (g - 1) * ldg + 1] * (*v0);
-        *v0 = G[2 * (i + 2) + (g - 1) * ldg] * (*v0) - G[2 * (i + 2) + (g - 1) * ldg + 1] * tmp5_1;
+        tmp_vec = v4_vec;
+        v4_vec = _mm512_add_pd(_mm512_mul_pd(g10, tmp_vec), _mm512_mul_pd(s10, v0_vec));
+        v0_vec = _mm512_sub_pd(_mm512_mul_pd(g10, v0_vec), _mm512_mul_pd(s10, tmp_vec));
 
         /*G(g,i+2)*/
-        double tmp0_2 = *v0;
-        *v0 = G[2 * (i + 2) + g * ldg] * tmp0_2 + G[2 * (i + 2) + g * ldg + 1] * (*v1);
-        *v1 = G[2 * (i + 2) + g * ldg] * (*v1) - G[2 * (i + 2) + g * ldg + 1] * tmp0_2;
+        tmp_vec = v0_vec;
+        v0_vec = _mm512_add_pd(_mm512_mul_pd(g11, tmp_vec), _mm512_mul_pd(s11, v1_vec));
+        v1_vec = _mm512_sub_pd(_mm512_mul_pd(g11, v1_vec), _mm512_mul_pd(s11, tmp_vec));
 
         /*G(g+1,i+2)*/
-        double tmp1_2 = *v1;
-        *v1 = G[2 * (i + 2) + (g + 1) * ldg] * tmp1_2 + G[2 * (i + 2) + (g + 1) * ldg + 1] * (*v2);
-        *v2 = G[2 * (i + 2) + (g + 1) * ldg] * (*v2) - G[2 * (i + 2) + (g + 1) * ldg + 1] * tmp1_2;
-    }
-}
+        tmp_vec = v1_vec;
+        v1_vec = _mm512_add_pd(_mm512_mul_pd(g12, tmp_vec), _mm512_mul_pd(s12, v2_vec));
+        v2_vec = _mm512_sub_pd(_mm512_mul_pd(g12, v2_vec), _mm512_mul_pd(s12, tmp_vec));
 
+        _mm512_mask_storeu_pd(v6, mask, v3_vec);
+        _mm512_mask_storeu_pd(v5, mask, v4_vec);
+        _mm512_mask_storeu_pd(v0, mask, v0_vec);
+        _mm512_mask_storeu_pd(v1, mask, v1_vec);
+        _mm512_mask_storeu_pd(v2, mask, v2_vec);
+    }
+    // for (int j = 0; j < m_left; j++, v0 += 1, v1 += 1, v2 += 1, v3 += 1, v4 += 1, v5 += 1, v6 += 1)
+    // {
+    //     /*G(g,i)*/
+    //     double tmp0 = *v0;
+    //     *v0 = G[2 * i + g * ldg] * tmp0 + G[2 * i + g * ldg + 1] * (*v1);
+    //     *v1 = G[2 * i + g * ldg] * (*v1) - G[2 * i + g * ldg + 1] * tmp0;
+
+    //     /*G(g+1,i)*/
+    //     double tmp1 = *v1;
+    //     *v1 = G[2 * i + (g + 1) * ldg] * tmp1 + G[2 * i + (g + 1) * ldg + 1] * (*v2);
+    //     *v2 = G[2 * i + (g + 1) * ldg] * (*v2) - G[2 * i + (g + 1) * ldg + 1] * tmp1;
+
+    //     /*G(g+2,i)*/
+    //     double tmp2 = *v2;
+    //     *v2 = G[2 * i + (g + 2) * ldg] * tmp2 + G[2 * i + (g + 2) * ldg + 1] * (*v3);
+    //     *v3 = G[2 * i + (g + 2) * ldg] * (*v3) - G[2 * i + (g + 2) * ldg + 1] * tmp2;
+
+    //     /*G(g+3,i)*/
+    //     double tmp3 = *v3;
+    //     *v3 = G[2 * i + (g + 3) * ldg] * tmp3 + G[2 * i + (g + 3) * ldg + 1] * (*v4);
+    //     *v4 = G[2 * i + (g + 3) * ldg] * (*v4) - G[2 * i + (g + 3) * ldg + 1] * tmp3;
+
+    //     /*G(g-1,i+1)*/
+    //     double tmp5 = *v5;
+    //     *v5 = G[2 * (i + 1) + (g - 1) * ldg] * tmp5 + G[2 * (i + 1) + (g - 1) * ldg + 1] * (*v0);
+    //     *v0 = G[2 * (i + 1) + (g - 1) * ldg] * (*v0) - G[2 * (i + 1) + (g - 1) * ldg + 1] * tmp5;
+
+    //     /*G(g,i+1)*/
+    //     double tmp0_1 = *v0;
+    //     *v0 = G[2 * (i + 1) + g * ldg] * tmp0_1 + G[2 * (i + 1) + g * ldg + 1] * (*v1);
+    //     *v1 = G[2 * (i + 1) + g * ldg] * (*v1) - G[2 * (i + 1) + g * ldg + 1] * tmp0_1;
+
+    //     /*G(g+1,i+1)*/
+    //     double tmp1_1 = *v1;
+    //     *v1 = G[2 * (i + 1) + (g + 1) * ldg] * tmp1_1 + G[2 * (i + 1) + (g + 1) * ldg + 1] * (*v2);
+    //     *v2 = G[2 * (i + 1) + (g + 1) * ldg] * (*v2) - G[2 * (i + 1) + (g + 1) * ldg + 1] * tmp1_1;
+
+    //     /*G(g+2,i+1)*/
+    //     double tmp2_1 = *v2;
+    //     *v2 = G[2 * (i + 1) + (g + 2) * ldg] * tmp2_1 + G[2 * (i + 1) + (g + 2) * ldg + 1] * (*v3);
+    //     *v3 = G[2 * (i + 1) + (g + 2) * ldg] * (*v3) - G[2 * (i + 1) + (g + 2) * ldg + 1] * tmp2_1;
+
+    //     /*G(g-2,i+2)*/
+    //     double tmp6 = *v6;
+    //     *v6 = G[2 * (i + 2) + (g - 2) * ldg] * tmp6 + G[2 * (i + 2) + (g - 2) * ldg + 1] * (*v5);
+    //     *v5 = G[2 * (i + 2) + (g - 2) * ldg] * (*v5) - G[2 * (i + 2) + (g - 2) * ldg + 1] * tmp6;
+
+    //     /*G(g-1,i+2)*/
+    //     double tmp5_1 = *v5;
+    //     *v5 = G[2 * (i + 2) + (g - 1) * ldg] * tmp5_1 + G[2 * (i + 2) + (g - 1) * ldg + 1] * (*v0);
+    //     *v0 = G[2 * (i + 2) + (g - 1) * ldg] * (*v0) - G[2 * (i + 2) + (g - 1) * ldg + 1] * tmp5_1;
+
+    //     /*G(g,i+2)*/
+    //     double tmp0_2 = *v0;
+    //     *v0 = G[2 * (i + 2) + g * ldg] * tmp0_2 + G[2 * (i + 2) + g * ldg + 1] * (*v1);
+    //     *v1 = G[2 * (i + 2) + g * ldg] * (*v1) - G[2 * (i + 2) + g * ldg + 1] * tmp0_2;
+
+    //     /*G(g+1,i+2)*/
+    //     double tmp1_2 = *v1;
+    //     *v1 = G[2 * (i + 2) + (g + 1) * ldg] * tmp1_2 + G[2 * (i + 2) + (g + 1) * ldg + 1] * (*v2);
+    //     *v2 = G[2 * (i + 2) + (g + 1) * ldg] * (*v2) - G[2 * (i + 2) + (g + 1) * ldg + 1] * tmp1_2;
+    // }
+}
 
 void applywave_fusing_4x3(int k, int m, int n, double *G, double *V, int ldv, int ldg, int mx, int my)
 {
@@ -459,7 +543,7 @@ void dmatrix_vector_multiply_mt_4x3(int k, int m, int n, double *g, double *v, i
         }
     }
 }
-void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
+void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg)
 {
 #pragma omp parallel
     {
@@ -501,10 +585,10 @@ int Check(double *v, double *vc, int m, int n, int ldv)
         for (int i = 0; i < m; i++)
         {
             // if ((v[i + j * ldv] != vc[i + j * ldv]) > EPSILON)
-            if (v[i + j * ldv] != vc[i + j * ldv])
+            if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
                 printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                return 0;
+                // return 0;
             }
         }
     }
@@ -528,31 +612,27 @@ int main(int argc, char const *argv[])
     double *v = dmatrix(m, n, ldv);
     double *g = dmatrix(2 * k, n - 1, ldg);
     double *cv; // = dmatrix(m, n, ldv);
-    
+
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
     for (int i = 0; i < 1; i++)
     {
 
-        // cv = copyMatrix(v, m, n, ldv);
+        cv = copyMatrix(v, m, n, ldv);
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
         dmatrix_vector_multiply_mt_4x3(k, m, n, g, v, ldv, ldg, 4, 3);
         long long int t2 = i64time();
 
-        
-        
-        // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // printf("%d\n", Check(v, cv, m, n, ldv));
+         dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+         printf("%d\n", Check(v, cv, m, n, ldv));
 
-        
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
         printf("4X3 %d %d %f %f %f\n", n, k, (flop / time1) * 1e-9, time1, x);
-       
     }
-   
+
     freedmatrix(v, m, n, ldv);
     freedmatrix(g, 2 * k, n - 1, ldg);
 

@@ -1,0 +1,95 @@
+
+
+
+def inti(mx,my):
+    for j in range(my):
+        for i in range(mx):
+            gname = "g{}".format(j*mx+i+1)
+            Gaddr = "G[2 * (i + {}) + (g + {}) * ldg ]".format(j,i-j)
+            
+            Saddr = "G[2 * (i + {}) + (g + {}) * ldg +1]".format(j,i-j)
+            gSet = "g{}=_mm512_set1_pd(G[2 * (i+{}) + (g+{}) * ldg]); ".format(j*mx+i+1,j,i-j)
+            sSet = "s{}=_mm512_set1_pd(G[2 * (i+{}) + (g+{}) * ldg+1]); ".format(j*mx+i+1,j,i-j) 
+            print(gSet)
+            print(sSet)
+    str_for = " for (int j = 0; j < m_iter; j++"
+    for j in range (mx+my):
+        str_for += ",v{} += 8".format(j)
+       
+    str_for += ")"
+    print(str_for) 
+    print("{")
+    for j in range (mx+1):
+         print("  v{}_vec = _mm512_loadu_pd(v{});".format(j,j))
+    varlist =[]
+    collist =[]
+    for i in range(mx+1):
+        collist.append("v{}".format(i))  
+    # print(collist)    
+    for i in range(mx+1):
+        varlist.append("v{}".format(i))
+    # print(varlist)
+    count = 1
+    for j in range(my):
+        if j>0 :
+            print("  _mm512_storeu_pd({0}, {0}_vec);".format(collist[-1]))
+            collist.pop()
+            collist = ["v{}".format(mx+j)]+ collist[0:mx]
+            print("  {}_vec = _mm512_loadu_pd(v{});".format(varlist[0],mx+j))
+        for i in  range(mx): 
+            
+            a = varlist[i]
+            b = varlist[i+1]
+            str_app="  tmp_vec = {0}_vec;\n  {0}_vec= _mm512_add_pd(_mm512_mul_pd(g{2}, tmp_vec), _mm512_mul_pd(s{2}, {1}_vec));\n  {1}_vec = _mm512_sub_pd(_mm512_mul_pd(g{2}, {1}_vec), _mm512_mul_pd(s{2}, tmp_vec));".format(a,b,count)
+            count +=1
+            print(str_app)
+            print('\n')
+        if j< my-1:
+            varlist = [varlist[-1]]   +varlist[0:mx] 
+    # print(collist)
+    for i in range( len(collist)):
+        print("  _mm512_storeu_pd({}, {}_vec);".format(collist[i],varlist[i]))
+       # print(varlist)
+    print("}")
+    
+    print("if (m_left > 0)")
+    print("{")
+    print(" __mmask8 mask = (__mmask8)(255 >> (8 - m_left));")
+    print('\n')
+    
+    vec_mask_list =[]
+    vec_mask_list1 = []
+    for i in range(mx+1):
+        vec_mask_list.append("v{}".format(i))
+        vec_mask_list1.append("v{}".format(i))
+    # print(vec_mask_list)
+    count1 =1
+    for i in range(mx+1):
+        print("  {0}_vec = _mm512_maskz_loadu_pd(mask, {0});".format(vec_mask_list[i]))
+    print('\n')
+    for j in range(my):
+        if j>0 :
+            print("  _mm512_mask_storeu_pd({0}, {0}_vec);".format(vec_mask_list1[-1]))
+            vec_mask_list1.pop()
+            vec_mask_list1 = ["v{}".format(mx+j)]+ vec_mask_list1[0:mx]
+            print("  {}_vec = _mm512_maskz_loadu_pd(mask, v{});".format(varlist[0],mx+j))
+        for i in range(mx):
+            a = vec_mask_list[i]
+            b = vec_mask_list[i+1]
+            print("  tmp_vec = {}_vec;".format(a))
+            print("  {0}_vec = _mm512_add_pd(_mm512_mul_pd(g{2}, tmp_vec), _mm512_mul_pd(s{1}, {0}_vec));".format(a,b,count1))
+            print("  {0}_vec = _mm512_sub_pd(_mm512_mul_pd(g{1}, {0}_vec), _mm512_mul_pd(s{1}, tmp_vec));".format(b,count1))
+            count1 += 1
+            print('\n')
+        if j<my-1:
+            vec_mask_list = [vec_mask_list[-1]] + vec_mask_list[0:mx]
+        
+    for i in range(len(vec_mask_list)):
+        print("  _mm512_mask_storeu_pd({}, mask, {}_vec);".format(vec_mask_list1[i],vec_mask_list[i]))
+            
+    print("}")
+    
+                
+    
+inti(4,3)   
+
