@@ -630,8 +630,8 @@ int main(int argc, char const *argv[])
         dmatrix_vector_multiply_mt_auto(k, m, n, g, v, ldv, ldg, mx, my);
         long long int t2 = i64time();
 
-        dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        printf("%d\n", Check(v, cv, m, n, ldv));
+        // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        // printf("%d\n", Check(v, cv, m, n, ldv));
 
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
