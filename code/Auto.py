@@ -142,7 +142,7 @@ sys.stdout = fake_stdout
 args = sys.argv
 
 
-inti(args[1], args[2])
+inti(int(args[1]), int(args[2]))
 
 
 with open("function.c", "w") as f:

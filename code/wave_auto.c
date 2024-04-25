@@ -635,7 +635,7 @@ int main(int argc, char const *argv[])
 
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
-        printf("4X3 %d %d %f %f %f\n", n, k, (flop / time1) * 1e-9, time1, x);
+        printf("%dX%d %d %d %f %f %f\n", mx, my, n, k, (flop / time1) * 1e-9, time1, x);
     }
 
     freedmatrix(v, m, n, ldv);

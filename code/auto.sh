@@ -1,24 +1,38 @@
-ns={
+ns=(
     "1000"
-    "1500"
     "2000"
-    "2500"
     "3000"
-    "3500"
     "4000"
-    "4500"
-    "5000"
-}
-ks={
+
+)
+ks=(
     "24"
-    "48"
     "96"
     "192"
-    "384"
-}
-hs={
-    ""
-}
-rm result.txt
-for n in "$${ns[@]}"; do
-   python3 Auto.py 
+)
+
+mx=(
+
+    "2"
+    "3"
+    "4"
+)
+my=(
+    "1"
+    "2"
+    "3"
+)
+
+rm -f result.txt
+
+for x in "${mx[@]}"; do
+    for y in "${my[@]}"; do 
+        python3 Auto.py $x $y
+        gcc -O3 -march=x86-64-v4 wave_auto.c function.c -fopenmp -lm -o wave_auto
+        for n in "${ns[@]}"; do
+            for k in "${ks[@]}"; do
+                OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 sde-external-9.33.0-2024-01-07-lin/sde64 -skx -- ./wave_auto ${n} ${k} ${x} ${y} >> result.txt
+            done
+        done
+    done
+done
