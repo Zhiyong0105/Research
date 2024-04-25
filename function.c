@@ -6,7 +6,7 @@
  #include "function.h" 
 
 
-void applywavemx2_avx_2x3(int m, double *V, double *G, int ldv, int ldg, int g, int i)
+void applywavemx2_avx_auto(int m, double *V, double *G, int ldv, int ldg, int g, int i)
 {
   double *restrict v0 = &V[(g+0) * ldv];
   double *restrict v1 = &V[(g+1) * ldv];

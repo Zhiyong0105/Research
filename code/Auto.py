@@ -10,7 +10,8 @@ def inti(mx,my):
     print(" #include \"function.h\" ")
     
     print('\n')
-    print("void applywavemx2_avx_{}x{}(int m, double *V, double *G, int ldv, int ldg, int g, int i)".format(mx,my))
+    # print("void applywavemx2_avx_{}x{}(int m, double *V, double *G, int ldv, int ldg, int g, int i)".format(mx,my))
+    print("void applywavemx2_avx_auto(int m, double *V, double *G, int ldv, int ldg, int g, int i)")
     print("{")
     ct = 0
     for i in range(mx+1):
@@ -138,9 +139,10 @@ def inti(mx,my):
 original_stdout = sys.stdout
 fake_stdout = io.StringIO()
 sys.stdout = fake_stdout
+args = sys.argv
 
 
-inti(4, 3)
+inti(args[1], args[2])
 
 
 with open("function.c", "w") as f:

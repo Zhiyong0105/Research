@@ -473,7 +473,7 @@ void applywave_avx(int k, int m, int n, double *G, double *V, int ldv, int ldg)
 //     // }
 // }
 
-void applywave_fusing_4x3(int k, int m, int n, double *G, double *V, int ldv, int ldg, int mx, int my)
+void applywave_fusing_auto(int k, int m, int n, double *G, double *V, int ldv, int ldg, int mx, int my)
 {
     if (n < k || k == 1)
     {
@@ -490,7 +490,7 @@ void applywave_fusing_4x3(int k, int m, int n, double *G, double *V, int ldv, in
                 // (g,i) starting point
 
                 {
-                    applywavemx2_avx_4x3(m, V, G, ldv, ldg, g, i);
+                    applywavemx2_avx_auto(m, V, G, ldv, ldg, g, i);
                 }
             }
             else
@@ -521,7 +521,7 @@ void applywave_fusing_4x3(int k, int m, int n, double *G, double *V, int ldv, in
     }
 }
 
-void dmatrix_vector_multiply_mt_4x3(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
+void dmatrix_vector_multiply_mt_auto(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
 {
 #pragma omp parallel
     {
@@ -540,7 +540,7 @@ void dmatrix_vector_multiply_mt_4x3(int k, int m, int n, double *g, double *v, i
         if (mend > mbegin)
         {
 
-            applywave_fusing_4x3(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+            applywave_fusing_auto(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
         }
     }
 }
@@ -589,8 +589,8 @@ int Check(double *v, double *vc, int m, int n, int ldv)
             // if ((v[i + j * ldv] != vc[i + j * ldv]) > EPSILON)
             if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
-               // printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                 return 0;
+                // printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
+                return 0;
             }
         }
     }
@@ -603,6 +603,9 @@ int main(int argc, char const *argv[])
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
     int k = atoi(argv[2]);
+    int mx = atoi(argv[3]);
+    int my = atoi(argv[4]);
+
     int ldv = m;     // >= m
     int ldg = 2 * k; // >= k
     if ((ldv % (4096 / 8)) == 0)
@@ -617,18 +620,18 @@ int main(int argc, char const *argv[])
 
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
 
         cv = copyMatrix(v, m, n, ldv);
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
-        dmatrix_vector_multiply_mt_4x3(k, m, n, g, v, ldv, ldg, 4, 3);
+        dmatrix_vector_multiply_mt_auto(k, m, n, g, v, ldv, ldg, mx, my);
         long long int t2 = i64time();
 
-         dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-         printf("%d\n", Check(v, cv, m, n, ldv));
+        dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        printf("%d\n", Check(v, cv, m, n, ldv));
 
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
