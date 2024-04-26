@@ -523,6 +523,42 @@ void applywave_fusing_auto(int k, int m, int n, double *G, double *V, int ldv, i
 
 void dmatrix_vector_multiply_mt_auto(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
 {
+    // #pragma omp parallel
+    //     {
+
+    //         int nt = omp_get_num_threads();
+    //         int id = omp_get_thread_num();
+    //         // split m
+    //         int bm = (m + nt - 1) / nt;
+    //         // bm = (bm+3)/4*4;
+    //         bm = (bm + 7) / 8 * 8;
+    //         int mbegin = bm * id < m ? bm * id : m;
+    //         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+    //         // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+
+    //         if (mend > mbegin)
+    //         {
+
+    //             applywave_fusing_auto(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+    //         }
+    //     }
+    int bm = 128;
+    int mend = 0;
+    for (int mbegin = 0; mbegin < m; mbegin += bm)
+    {
+        if (m - mbegin < bm)
+        {
+            applywave_fusing_auto(k, m - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+        }
+        else{
+            applywave_fusing_auto(k, bm, n, g, v + mbegin, ldv, ldg, mx, my);
+        }
+
+    }
+}
+void dmatrix_vector_multiply_mt_op(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
+{
 #pragma omp parallel
     {
 
@@ -540,7 +576,7 @@ void dmatrix_vector_multiply_mt_auto(int k, int m, int n, double *g, double *v, 
         if (mend > mbegin)
         {
 
-            applywave_fusing_auto(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+            dmatrix_vector_multiply_mt_auto(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
         }
     }
 }

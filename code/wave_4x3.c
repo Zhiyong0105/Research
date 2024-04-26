@@ -589,8 +589,8 @@ int Check(double *v, double *vc, int m, int n, int ldv)
             // if ((v[i + j * ldv] != vc[i + j * ldv]) > EPSILON)
             if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
-               // printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                 return 0;
+                // printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
+                return 0;
             }
         }
     }
@@ -627,8 +627,8 @@ int main(int argc, char const *argv[])
         dmatrix_vector_multiply_mt_4x3(k, m, n, g, v, ldv, ldg, 4, 3);
         long long int t2 = i64time();
 
-         dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-         printf("%d\n", Check(v, cv, m, n, ldv));
+        dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        printf("%d\n", Check(v, cv, m, n, ldv));
 
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
