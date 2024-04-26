@@ -551,10 +551,10 @@ void dmatrix_vector_multiply_mt_auto(int k, int m, int n, double *g, double *v, 
         {
             applywave_fusing_auto(k, m - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
         }
-        else{
+        else
+        {
             applywave_fusing_auto(k, bm, n, g, v + mbegin, ldv, ldg, mx, my);
         }
-
     }
 }
 void dmatrix_vector_multiply_mt_op(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
@@ -577,6 +577,29 @@ void dmatrix_vector_multiply_mt_op(int k, int m, int n, double *g, double *v, in
         {
 
             dmatrix_vector_multiply_mt_auto(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
+        }
+    }
+}
+void dmatrix_vector_multiply_mt_Auto(int k, int m, int n, double *g, double *v, int ldv, int ldg, int mx, int my)
+{
+#pragma omp parallel
+    {
+
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        // split m
+        int bm = (m + nt - 1) / nt;
+        // bm = (bm+3)/4*4;
+        bm = (bm + 7) / 8 * 8;
+        int mbegin = bm * id < m ? bm * id : m;
+        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+        // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+
+        if (mend > mbegin)
+        {
+
+            applywave_fusing_auto(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, mx, my);
         }
     }
 }
@@ -656,14 +679,15 @@ int main(int argc, char const *argv[])
 
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
-    for (int i = 0; i < 1; i++)
+    // cv = copyMatrix(v, m, n, ldv);
+    for (int i = 0; i < 5; i++)
     {
 
-        cv = copyMatrix(v, m, n, ldv);
+       
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
-        dmatrix_vector_multiply_mt_auto(k, m, n, g, v, ldv, ldg, mx, my);
+        dmatrix_vector_multiply_mt_op(k, m, n, g, v, ldv, ldg, mx, my);
         long long int t2 = i64time();
 
         // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
