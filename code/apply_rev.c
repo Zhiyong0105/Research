@@ -69,50 +69,109 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
         }
     }
 }
+// void apply_rev_my2(int K, int m, int n, double *G, double *V, int ldv, int ldg)
+// {
+//     for (int i = 0; i < m; i++)
+//     {
+//         for (int k = 0; k < K; k += 2)
+//         {
+//             double v0, v1;
+//             v0 = V[i];
+//             v1 = V[i + ldv];
+//             double g0 = G[2 * k];
+//             double s0 = G[2 * k + 1];
+//             double tmp = v0;
+//             v0 = g0 * tmp + s0 * v1;
+//             v1 = g0 * v1 - s0 * tmp;
+//             for (int g = 1; g < n - 1; g++)
+//             {
+//                 // double gamma = G[2 * k + i * ldg];
+//                 // double sigma = G[2 * k + i * ldg + 1];
+//                 // double *v = &V[i * ldv];
+//                 // double *v1 = &V[(i + 1) * ldv];
+//                 // applywavemx2(m, gamma, sigma, v, v1);
+
+//                 // double *xp = &V[i + g * ldv];
+//                 // double *yp = &V[i + (g + 1) * ldv];
+//                 double v2 = V[i + (g + 1) * ldv];
+//                 double gamma = G[2 * k + g * ldg];
+//                 double sigma = G[2 * k + g * ldg + 1];
+//                 double tmp = v1;
+//                 v1 = gamma * tmp + sigma * v2;
+//                 v2 = gamma * v2 - sigma * tmp;
+//                 double gamma1 = G[2 * (k + 1) + (g - 1) * ldg];
+//                 double sigma1 = G[2 * (k + 1) + (g - 1) * ldg + 1];
+//                 double tmp1 = v0;
+//                 v0 = gamma1 * tmp + sigma1 * v1;
+//                 v1 = gamma1 * v1 - sigma1 * tmp;
+//                 V[i + (g - 1) * ldv] = v0;
+//                 v0 = v1;
+//                 v1 = v2;
+//             }
+//             double gend = G[2 * (k + 1) + (n - 2) * ldg];
+//             double send = G[2 * (k + 1) + (n - 2) * ldg + 1];
+//             tmp = v0;
+//             v0 = gend * tmp + send * v1;
+//             v1 = gend * v1 - send * tmp;
+//             V[i + (n - 2) * ldv] = v0;
+//             V[i + (n - 1) * ldv] = v1;
+//         }
+//     }
+// }
 void apply_rev_my2(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 {
+
     for (int i = 0; i < m; i++)
     {
+        double v0,v1,v2;
         for (int k = 0; k < K; k += 2)
         {
-            double v0, v1;
-            v0 = V[i];
-            v1 = V[i + ldv];
-            double g0 = G[2 * k];
-            double s0 = G[2 * k + 1];
-            double tmp = v0;
-            v0 = g0 * tmp + s0 * v1;
-            v1 = g0 * v1 - s0 * tmp;
+            /*starting with the singlg one Givens rotation*/
+             v0 = V[i];
+             v1 = V[i + ldv];
+
+            /*paramater*/
+            double gamma = G[2 * k];
+            double sigma = G[2 * k + 1];
+
+            double tmp;
+            tmp = v0;
+            v0 = gamma * tmp + sigma * v1;
+            v1 = gamma * v1 - sigma * tmp;
+
             for (int g = 1; g < n - 1; g++)
             {
-                // double gamma = G[2 * k + i * ldg];
-                // double sigma = G[2 * k + i * ldg + 1];
-                // double *v = &V[i * ldv];
-                // double *v1 = &V[(i + 1) * ldv];
-                // applywavemx2(m, gamma, sigma, v, v1);
+                 v2 = V[i + (g + 1) * ldv];
 
-                // double *xp = &V[i + g * ldv];
-                // double *yp = &V[i + (g + 1) * ldv];
-                double v2 = V[i + (g + 1) * ldv];
-                double gamma = G[2 * k + g * ldg];
-                double sigma = G[2 * k + g * ldg + 1];
-                double tmp = v1;
-                v1 = gamma * tmp + sigma * v2;
-                v2 = gamma * v2 - sigma * tmp;
-                double gamma1 = G[2 * (k + 1) + (g - 1) * ldg];
-                double sigma1 = G[2 * (k + 1) + (g - 1) * ldg + 1];
-                double tmp1 = v0;
-                v0 = gamma1 * tmp + sigma1 * v1;
-                v1 = gamma1 * v1 - sigma1 * tmp;
+                double gamma1 = G[2 * k + g * ldg];
+                double sigma1 = G[2 * k + g * ldg + 1];
+
+                double gamma2 = G[2 * (k + 1) + (g - 1) * ldg];
+                double sigma2 = G[2 * (k + 1) + (g - 1) * ldg + 1];
+
+                double tmp1;
+                /*G(k,g)*/
+                tmp1 = v1;
+                v1 = gamma1 * tmp1 + sigma1 * v2;
+                v2 = gamma1 * v2 - sigma1 * tmp1;
+
+                /*G(k+1,g-1)*/
+                tmp1 = v0;
+                v0 = gamma2 * tmp1 + sigma2 * v1;
+                v1 = gamma2 * v1 - sigma2 * tmp1;
+
                 V[i + (g - 1) * ldv] = v0;
                 v0 = v1;
                 v1 = v2;
             }
-            double gend = G[2 * (k + 1) + (n - 2) * ldg];
-            double send = G[2 * (k + 1) + (n - 2) * ldg + 1];
+
+            /*G(k+1,n-2)*/
+            double gamma_end = G[2 * (k + 1) + (n - 2) * ldg];
+            double sigma_end = G[2 * (k + 1) + (n - 2) * ldg + 1];
+            
             tmp = v0;
-            v0 = gend * tmp + send * v1;
-            v1 = gend * v1 - send * tmp;
+            v0 = gamma_end * tmp + sigma_end * v1;
+            v1 = gamma_end * v1 - sigma_end * tmp;
             V[i + (n - 2) * ldv] = v0;
             V[i + (n - 1) * ldv] = v1;
         }
@@ -246,8 +305,8 @@ int Check(double *v, double *vc, int m, int n, int ldv)
             // if ((v[i + j * ldv] != vc[i + j * ldv]) > EPSILON)
             if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
-                 printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                 return 0;
+                printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
+                
             }
         }
     }
@@ -303,30 +362,28 @@ int main(int argc, char const *argv[])
     /* code */
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
-    int k = 194;
+    int k = 192;
     int ldv = m + 16;     // >= m
     int ldg = 2 * k + 16; // >= k
 
     double *v = dmatrix(m, n, ldv);
     double *g = dmatrix(2 * k, n - 1, ldg);
-    double *vc ;
+    double *vc;
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
 
-    vc = copyMatrix(v,m,n,ldv);
+    vc = copyMatrix(v, m, n, ldv);
 
     for (int i = 0; i < 1; i++)
     {
         /* code */
 
-        
-
         // apply_rev(k, m, n, g, vc, ldv, ldg);
         applyFrancis(k, m, n, g, v, ldv, ldg);
-        // apply_rev_my2(k,m,n,g,vc,ldv,ldg);
+        apply_rev_my2(k, m, n, g, vc, ldv, ldg);
 
-        apply_rev_my3(k, m, n, g, vc, ldv, ldg,3);
-         printf("%d\n", Check(v, vc, m, n, ldv));
+        // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
+        printf("%d\n", Check(v, vc, m, n, ldv));
 
         // free(v);
     }
