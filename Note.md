@@ -28,3 +28,18 @@ gcc -O3  -march=x86-64-v4 wave_auto.c function.c -fopenmp -lm -o wave_auto
 OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 sde-external-9.33.0-2024-01-07-lin/sde64 -skx -- ./wave_auto
 
 ```
+```
+echo "powersave" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+```
+```
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+```
+```
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_governors
+```
+```
+cpupower frequency-info
+```
+```
+watch -n 1 'cat /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq'
+```
