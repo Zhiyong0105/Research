@@ -43,3 +43,12 @@ cpupower frequency-info
 ```
 watch -n 1 'cat /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq'
 ```
+```
+uname -a
+```
+```
+echo "performance" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+```
+```
+cpupower frequency-set -u clock_freq
+```

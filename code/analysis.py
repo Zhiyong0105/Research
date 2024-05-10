@@ -10,7 +10,7 @@ Groupmean_data_mean= data.groupby(["name","n","k"]).mean()
 Groupmean_data_mean = Groupmean_data_mean.reset_index()
 
 Groupmean_data_op_mean= data_op.groupby(["name","n","k"]).mean()
-Groupmean_data_op_mean = Groupmean_data_mean.reset_index()
+Groupmean_data_op_mean = Groupmean_data_op_mean.reset_index()
 
 for k in k_v:
     plt.figure(figsize=(8, 6))
