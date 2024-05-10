@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <omp.h>
 #include <pmmintrin.h>
+#include <immintrin.h>
 int64_t i64time()
 {
     struct timespec ts;
@@ -69,6 +70,7 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
         }
     }
 }
+
 // void apply_rev_my2(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 // {
 //     for (int i = 0; i < m; i++)
@@ -118,17 +120,149 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 //         }
 //     }
 // }
+void apply_rec_my2_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
+{
+    __m256d v0, v1, v2, gamma, sigma, tmp;
+    for (int i = 0; i < m; i += 4)
+    {
+        for (int k = 0; k < K; k += 2)
+        {
+
+            v0 = _mm256_load_pd(&V[i]);
+            v1 = _mm256_load_pd(&V[i + ldv]);
+
+            gamma = _mm256_broadcast_sd(&G[2 * k]);
+            sigma = _mm256_broadcast_sd(&G[2 * k + 1]);
+
+            tmp = v0;
+            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+            v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+            for (int g = 1; g < n - 1; g++)
+            {
+                v2 = _mm256_loadu_pd(&V[i + (g + 1) * ldv]);
+
+                /*G(k,g)*/
+                gamma = _mm256_broadcast_sd(&G[2 * k + g * ldg]);
+                sigma = _mm256_broadcast_sd(&G[2 * k + g * ldg + 1]);
+                tmp = v1;
+                v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+                v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+
+                /*G(k+1,g-1)*/
+                gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg]);
+                sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg + 1]);
+                tmp = v0;
+                v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+                v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+
+                _mm256_storeu_pd(&V[i + (g - 1) * ldv], v0);
+
+                v0 = _mm256_loadu_pd(&V[i + g * ldv]);
+                v1 = _mm256_loadu_pd(&V[i + (g + 1) * ldv]);
+            }
+            /*G(k+1,n-2)*/
+            gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg]);
+            sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg + 1]);
+            tmp = v0;
+            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+            v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+            _mm256_storeu_pd(&V[i + (n - 2) * ldv], v0);
+            _mm256_storeu_pd(&V[i + (n - 1) * ldv], v1);
+        }
+    }
+}
+void apply_rev_my3_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
+{
+    for (int i = 0; i < m; i += 4)
+    {
+        for (int k = 0; k < K; k += 3)
+        {
+            __m256d v0, v1, v2, v3, gamma, sigma, tmp;
+            v0 = _mm256_load_pd(&V[i]);
+            v1 = _mm256_load_pd(&V[i + ldv]);
+            v2 = _mm256_load_pd(&V[i + 2 * ldv]);
+
+            gamma = _mm256_broadcast_sd(&G[2 * k]);
+            sigma = _mm256_broadcast_sd(&G[2 * k + 1]);
+            tmp = v0;
+            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+            v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+
+            gamma = _mm256_broadcast_sd(&G[2 * k + ldg]);
+            sigma = _mm256_broadcast_sd(&G[2 * k + ldg + 1]);
+            tmp = v1;
+            v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+            v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+
+            gamma = _mm256_broadcast_sd(&G[2 * (k + 1)]);
+            sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + 1]);
+            tmp = v0;
+            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+            v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+
+            for (int g = 2; g < n - 1; g++)
+            {
+                v3 = _mm256_load_pd(&V[i + (g + 1) * ldv]);
+
+                gamma = _mm256_broadcast_sd(&G[2 * k + g * ldg]);
+                sigma = _mm256_broadcast_sd(&G[2 * k + g * ldg + 1]);
+                tmp = v2;
+                v2 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v3));
+                v3 = _mm256_sub_pd(_mm256_mul_pd(gamma, v3), _mm256_mul_pd(sigma, tmp));
+
+                gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg]);
+                sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg + 1]);
+                tmp = v1;
+                v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+                v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+
+                gamma = _mm256_broadcast_sd(&G[2 * (k + 2)]);
+                sigma = _mm256_broadcast_sd(&G[2 * (k + 2) + 1]);
+                tmp = v0;
+                v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+                v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+
+                _mm256_storeu_pd(&V[i + (g - 2) * ldv], v0);
+
+                v0 = _mm256_loadu_pd(&V[i + (g - 1) * ldv]);
+                v1 = _mm256_loadu_pd(&V[i + (g)*ldv]);
+                v2 = _mm256_loadu_pd(&V[i + (g + 1) * ldv]);
+            }
+            gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg]);
+            sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg + 1]);
+            tmp = v1;
+            v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+            v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+
+            gamma = _mm256_broadcast_sd(&G[2 * (k + 2) + (n - 3) * ldg]);
+            sigma = _mm256_broadcast_sd(&G[2 * (k + 2) + (n - 3) * ldg + 1]);
+            tmp = v0;
+            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+            v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+
+            gamma = _mm256_broadcast_sd(&G[2 * (k + 2) + (n - 2) * ldg]);
+            sigma = _mm256_broadcast_sd(&G[2 * (k + 2) + (n - 2) * ldg + 1]);
+            tmp = v1;
+            v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+            v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+
+            _mm256_storeu_pd(&V[i + (n - 3) * ldv], v0);
+            _mm256_storeu_pd(&V[i + (n - 2) * ldv], v1);
+            _mm256_storeu_pd(&V[i + (n - 1) * ldv], v2);
+        }
+    }
+}
 void apply_rev_my2(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 {
 
     for (int i = 0; i < m; i++)
     {
-        double v0,v1,v2;
+        double v0, v1, v2;
         for (int k = 0; k < K; k += 2)
         {
             /*starting with the singlg one Givens rotation*/
-             v0 = V[i];
-             v1 = V[i + ldv];
+            v0 = V[i];
+            v1 = V[i + ldv];
 
             /*paramater*/
             double gamma = G[2 * k];
@@ -141,7 +275,7 @@ void apply_rev_my2(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 
             for (int g = 1; g < n - 1; g++)
             {
-                 v2 = V[i + (g + 1) * ldv];
+                v2 = V[i + (g + 1) * ldv];
 
                 double gamma1 = G[2 * k + g * ldg];
                 double sigma1 = G[2 * k + g * ldg + 1];
@@ -168,7 +302,7 @@ void apply_rev_my2(int K, int m, int n, double *G, double *V, int ldv, int ldg)
             /*G(k+1,n-2)*/
             double gamma_end = G[2 * (k + 1) + (n - 2) * ldg];
             double sigma_end = G[2 * (k + 1) + (n - 2) * ldg + 1];
-            
+
             tmp = v0;
             v0 = gamma_end * tmp + sigma_end * v1;
             v1 = gamma_end * v1 - sigma_end * tmp;
@@ -405,7 +539,7 @@ int Check(double *v, double *vc, int m, int n, int ldv)
             if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
                 printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                
+                // return 0;
             }
         }
     }
@@ -461,7 +595,7 @@ int main(int argc, char const *argv[])
     /* code */
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
-    int k = 192;
+    int k = 6;
     int ldv = m + 16;     // >= m
     int ldg = 2 * k + 16; // >= k
 
@@ -477,9 +611,12 @@ int main(int argc, char const *argv[])
     {
         /* code */
 
-        // apply_rev(k, m, n, g, vc, ldv, ldg);
-        applyFrancis(k, m, n, g, v, ldv, ldg);
-        apply_rev_my2(k, m, n, g, vc, ldv, ldg);
+        apply_rev(k, m, n, g, v, ldv, ldg);
+        apply_rev_avx(k, m, n, g, vc, ldv, ldg);
+        // applyFrancis(k, m, n, g, v, ldv, ldg);
+        // apply_rev_my2(k, m, n, g, v, ldv, ldg);
+        // apply_rec_my2_avx(k, m, n, g, vc, ldv, ldg);
+        // apply_rev_my3_avx(k, m, n, g, vc, ldv, ldg);
 
         // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
         printf("%d\n", Check(v, vc, m, n, ldv));
