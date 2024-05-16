@@ -52,3 +52,4 @@ echo "performance" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_gover
 ```
 cpupower frequency-set -u clock_freq
 ```
+* DO NOT USE FKING LOAD WITHOUT U!!!!!!!!
