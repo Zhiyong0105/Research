@@ -7,6 +7,7 @@
 #include <omp.h>
 #include <pmmintrin.h>
 #include <immintrin.h>
+#include "apply_rev_avx.h"
 int64_t i64time()
 {
     struct timespec ts;
@@ -70,7 +71,18 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
         }
     }
 }
+void apply_rev_my(int K, int m, int n, double *G, double *V, int ldv, int ldg,int my) 
+{
+    for(int i=0;i<m;i+=4)
+    {
+        for(int k = 0;k<K;k+=my)
+        {
+            apply_rev_avx(k,m,n,G,V,ldv,ldg,my,i);
 
+        }
+    }
+
+}
 void apply_rec_my2_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 {
     __m256d v0, v1, v2, gamma, sigma, tmp;
