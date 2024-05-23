@@ -3,6 +3,6 @@
 #define APPLY_REV_AVX_H
 
 void apply_rev_avx();
-
+void apply_rev_avx_mv();
 
 #endif

@@ -71,21 +71,24 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
         }
     }
 }
-void apply_rev_avx_auto(int K, int m, int n, double *G, double *V, int ldv, int ldg,int my) 
+// void apply_rev_avx_auto(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my)
+// {
+//     for (int i = 0; i < m; i += 4)
+//     {
+//         for (int k = 0; k < K; k += my)
+//         {
+//         }
+//     }
+// }
+void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my,int mv)
 {
-    for(int i=0;i<m;i+=4)
+    for (int i = 0; i < m; i += mv*4)
     {
-        for(int k = 0;k<K;k+=my)
+        for (int k = 0; k < K; k += my)
         {
-            apply_rev_avx(k,m,n,G,V,ldv,ldg,my,i);
-
+            apply_rev_avx_mv(k, m, n, G, V, ldv, ldg, my, i, mv);
         }
     }
-
-}
-void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg,int my)
-{
-
 }
 void apply_rec_my2_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 {
@@ -136,75 +139,74 @@ void apply_rec_my2_avx(int K, int m, int n, double *G, double *V, int ldv, int l
         }
     }
 }
-void apply_rec_my2_avx_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg)
-{
-    __m256d v0, v1, v2, gamma, sigma, tmp;
-    for (int i = 0; i < m; i += 4)
-    {
-        for (int k = 0; k < K; k += 2)
-        {
+// void apply_rec_my2_avx_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg)
+// {
+//     __m256d v0, v1, v2, gamma, sigma, tmp;
+//     for (int i = 0; i < m; i += 4)
+//     {
+//         for (int k = 0; k < K; k += 2)
+//         {
 
-            v0 = _mm256_loadu_pd(&V[i]);
-            v1 = _mm256_loadu_pd(&V[i+4]);
-            v2 = _mm256_loadu_pd(&V[i + ldv]);
-            v3 = _mm256_loadu_pd(&V[i+ldv+4]);
-            /*G(k,0)*/
-            gamma = _mm256_broadcast_sd(&G[2 * k]);
-            sigma = _mm256_broadcast_sd(&G[2 * k + 1]);
+//             v0 = _mm256_loadu_pd(&V[i]);
+//             v1 = _mm256_loadu_pd(&V[i + 4]);
+//             v2 = _mm256_loadu_pd(&V[i + ldv]);
+//             v3 = _mm256_loadu_pd(&V[i + ldv + 4]);
+//             /*G(k,0)*/
+//             gamma = _mm256_broadcast_sd(&G[2 * k]);
+//             sigma = _mm256_broadcast_sd(&G[2 * k + 1]);
 
-            tmp = v0;
-            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
-            v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+//             tmp = v0;
+//             v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+//             v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
 
-            tmp = v1;
-            v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
-            v3 = _mm256_sub_pd(_mm256_mul_pd(gamma, v3), _mm256_mul_pd(sigma, tmp));
+//             tmp = v1;
+//             v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+//             v3 = _mm256_sub_pd(_mm256_mul_pd(gamma, v3), _mm256_mul_pd(sigma, tmp));
 
-            for (int g = 1; g < n - 1; g++)
-            {
-                v20 = _mm256_loadu_pd(&V[i + (g + 1) * ldv]);
-                v21 = _mm256_loadu_pd(&V[i + (g + 1) * ldv+4]);
+//             for (int g = 1; g < n - 1; g++)
+//             {
+//                 v20 = _mm256_loadu_pd(&V[i + (g + 1) * ldv]);
+//                 v21 = _mm256_loadu_pd(&V[i + (g + 1) * ldv + 4]);
 
-                /*G(k,g)*/
-                gamma = _mm256_broadcast_sd(&G[2 * k + g * ldg]);
-                sigma = _mm256_broadcast_sd(&G[2 * k + g * ldg + 1]);
-                tmp = v1;
-                v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
-                v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
+//                 /*G(k,g)*/
+//                 gamma = _mm256_broadcast_sd(&G[2 * k + g * ldg]);
+//                 sigma = _mm256_broadcast_sd(&G[2 * k + g * ldg + 1]);
+//                 tmp = v1;
+//                 v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+//                 v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
 
-                /*G(k+1,g-1)*/
-                gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg]);
-                sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg + 1]);
-                tmp = v0;
-                v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
-                v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
+//                 /*G(k+1,g-1)*/
+//                 gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg]);
+//                 sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (g - 1) * ldg + 1]);
+//                 tmp = v0;
+//                 v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+//                 v1 = _mm256_sub_pd(_mm256_mul_pd(gamma, v1), _mm256_mul_pd(sigma, tmp));
 
-                _mm256_storeu_pd(&V[i + (g - 1) * ldv], v00);
-                _mm256_storeu_pd(&V[i + (g - 1) * ldv+4], v01);
-                
-                v00 = v10;
-                v01 = v11;
-                v10 = v20;
-                v11 = v21;
-                
-            }
-            /*G(k+1,n-2)*/
-            gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg]);
-            sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg + 1]);
-            tmp = v00;
-            v00 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v10));
-            v10 = _mm256_sub_pd(_mm256_mul_pd(gamma, v10), _mm256_mul_pd(sigma, tmp));
+//                 _mm256_storeu_pd(&V[i + (g - 1) * ldv], v00);
+//                 _mm256_storeu_pd(&V[i + (g - 1) * ldv + 4], v01);
 
-            tmp = v01;
-            v01 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v11));
-            v11 = _mm256_sub_pd(_mm256_mul_pd(gamma, v11), _mm256_mul_pd(sigma, tmp));
-            _mm256_storeu_pd(&V[i + (n - 2) * ldv], v00);
-            _mm256_storeu_pd(&V[i + (n - 2) * ldv+4], v01);
-            _mm256_storeu_pd(&V[i + (n - 1) * ldv], v10);
-            _mm256_storeu_pd(&V[i + (n - 1) * ldv+4], v11);
-        }
-    }
-}
+//                 v00 = v10;
+//                 v01 = v11;
+//                 v10 = v20;
+//                 v11 = v21;
+//             }
+//             /*G(k+1,n-2)*/
+//             gamma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg]);
+//             sigma = _mm256_broadcast_sd(&G[2 * (k + 1) + (n - 2) * ldg + 1]);
+//             tmp = v00;
+//             v00 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v10));
+//             v10 = _mm256_sub_pd(_mm256_mul_pd(gamma, v10), _mm256_mul_pd(sigma, tmp));
+
+//             tmp = v01;
+//             v01 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v11));
+//             v11 = _mm256_sub_pd(_mm256_mul_pd(gamma, v11), _mm256_mul_pd(sigma, tmp));
+//             _mm256_storeu_pd(&V[i + (n - 2) * ldv], v00);
+//             _mm256_storeu_pd(&V[i + (n - 2) * ldv + 4], v01);
+//             _mm256_storeu_pd(&V[i + (n - 1) * ldv], v10);
+//             _mm256_storeu_pd(&V[i + (n - 1) * ldv + 4], v11);
+//         }
+//     }
+// }
 void apply_rev_my3_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 {
     for (int i = 0; i < m; i += 4)
@@ -535,10 +537,11 @@ int main(int argc, char const *argv[])
         // apply_rev_my2(k, m, n, g, vc, ldv, ldg);
         apply_rec_my2_avx(k, m, n, g, v, ldv, ldg);
         // apply_rev_my3_avx(k, m, n, g, vc, ldv, ldg);
-        apply_rev_avx_auto(k, m, n, g, vc, ldv, ldg,2);
+        // apply_rev_avx_auto(k, m, n, g, vc, ldv, ldg, 2);
+        apply_rev_avx_auto_mv(k, m, n, g, vc, ldv, ldg, 2,2);
 
-            // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
-            printf("%d\n", Check(v, vc, m, n, ldv));
+        // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
+        printf("%d\n", Check(v, vc, m, n, ldv));
 
         // free(v);
     }
