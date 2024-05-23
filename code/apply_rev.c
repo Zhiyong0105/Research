@@ -71,7 +71,7 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
         }
     }
 }
-void apply_rev_my(int K, int m, int n, double *G, double *V, int ldv, int ldg,int my) 
+void apply_rev_avx_auto(int K, int m, int n, double *G, double *V, int ldv, int ldg,int my) 
 {
     for(int i=0;i<m;i+=4)
     {
@@ -81,6 +81,10 @@ void apply_rev_my(int K, int m, int n, double *G, double *V, int ldv, int ldg,in
 
         }
     }
+
+}
+void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg,int my)
+{
 
 }
 void apply_rec_my2_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
@@ -140,21 +144,21 @@ void apply_rec_my2_avx_mv(int K, int m, int n, double *G, double *V, int ldv, in
         for (int k = 0; k < K; k += 2)
         {
 
-            v00 = _mm256_loadu_pd(&V[i]);
-            v01 = _mm256_loadu_pd(&V[i+4]);
-            v10 = _mm256_loadu_pd(&V[i + ldv]);
-            v11 = _mm256_loadu_pd(&V[i+ldv+4]);
+            v0 = _mm256_loadu_pd(&V[i]);
+            v1 = _mm256_loadu_pd(&V[i+4]);
+            v2 = _mm256_loadu_pd(&V[i + ldv]);
+            v3 = _mm256_loadu_pd(&V[i+ldv+4]);
             /*G(k,0)*/
             gamma = _mm256_broadcast_sd(&G[2 * k]);
             sigma = _mm256_broadcast_sd(&G[2 * k + 1]);
 
-            tmp = v00;
-            v00 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v10));
-            v10 = _mm256_sub_pd(_mm256_mul_pd(gamma, v10), _mm256_mul_pd(sigma, tmp));
+            tmp = v0;
+            v0 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v2));
+            v2 = _mm256_sub_pd(_mm256_mul_pd(gamma, v2), _mm256_mul_pd(sigma, tmp));
 
-            tmp = v01;
-            v01 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v11));
-            v11 = _mm256_sub_pd(_mm256_mul_pd(gamma, v11), _mm256_mul_pd(sigma, tmp));
+            tmp = v1;
+            v1 = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v1));
+            v3 = _mm256_sub_pd(_mm256_mul_pd(gamma, v3), _mm256_mul_pd(sigma, tmp));
 
             for (int g = 1; g < n - 1; g++)
             {
@@ -530,10 +534,11 @@ int main(int argc, char const *argv[])
         // applyFrancis(k, m, n, g, v, ldv, ldg);
         // apply_rev_my2(k, m, n, g, vc, ldv, ldg);
         apply_rec_my2_avx(k, m, n, g, v, ldv, ldg);
-        apply_rev_my3_avx(k, m, n, g, vc, ldv, ldg);
+        // apply_rev_my3_avx(k, m, n, g, vc, ldv, ldg);
+        apply_rev_avx_auto(k, m, n, g, vc, ldv, ldg,2);
 
-        // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
-        printf("%d\n", Check(v, vc, m, n, ldv));
+            // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
+            printf("%d\n", Check(v, vc, m, n, ldv));
 
         // free(v);
     }
