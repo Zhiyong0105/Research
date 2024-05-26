@@ -96,7 +96,8 @@ def apply_rev_auto_mv(my, mv):
     # store
     for y in range (my):
         for v in range(mv):
-            print(f"_mm256_storeu_pd(&V[i + (n - {my-y}) * ldv], v{y}{v});")
+            offset_v = " ldv + 4" if v != 0 else " ldv"
+            print(f"_mm256_storeu_pd(&V[i + (n - {my-y}) *{offset_v}], v{y}{v});")
         
     
             
