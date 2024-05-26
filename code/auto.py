@@ -90,6 +90,8 @@ def apply_rev_auto_mv(my, mv):
             print(f"sigma = _mm256_broadcast_sd(&G[2 * (k + {ii}) + (n - {my-gg}) * ldg + 1]);")
             for v in range(mv):
                 print(f"tmp = v{gg}{v};")
+                print(f" v{gg}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{gg}{v}));")
+                print(f" v{gg+1}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{gg+1}{v}), _mm256_mul_pd(sigma, tmp));")
     
     # store
     for y in range (my):
