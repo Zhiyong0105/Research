@@ -1,6 +1,7 @@
 import io
 import sys
 
+
 def apply_rev_auto_mv(my, mv):
     print("#include <stdio.h>")
     print("#include <stdlib.h>")
@@ -11,92 +12,111 @@ def apply_rev_auto_mv(my, mv):
     print("#include \"apply_rev_avx.h\"")
     print("void apply_rev_avx_mv(int k, int m, int n, double *G, double *V, int ldv, int ldg, int my, int i, int mv)")
     print("{")
-    tmp = 0
+
     str_init = "__m256d "
-    for i in range((my+1)*mv):
-        str_init += "v{},".format(tmp)
-        tmp += 1
+    for y in range(my+1):
+        for v in range(mv):
+            str_init += f" v{y}{v}, "
+
     str_init += "gamma, sigma, tmp;"
     print(str_init)
-
-
-
-    tmp = 0
-    for i in range(my):
-        for j in range(mv):
-            offset_j = f" + {4 * j}" if 4 * j != 0 else ""
-            if i != 0:
-                if i==1:
-                    offset_i = f" + ldv"
-                else:
-                    offset_i = f"{i} * ldv "
-            else:
-                offset_i=""
-              
-            print(f"    v{tmp} = _mm256_loadu_pd(&V[i{offset_i}{offset_j}]);")
-            tmp += 1
-
-    for k in range(my - 1):
-        for y in range(k + 1):
-            g = k - y
-            offset_i = f"(k + {y}) " if y != 0 else "k "
-            offset_j = f"+ {g} * ldg " if g != 0 else ""
-            print(f"    gamma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j}]);")
-            print(f"    sigma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j} + 1]);")
-
-            for v in range(mv):
-                print(f"    tmp = v{v};")
-                print(f"    v{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{v + 2}));")
-                print(f"    v{v + 2} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{v + 2}), _mm256_mul_pd(sigma, tmp));")
-
-            print("    for (int g = 1; g < n - 1; g++)")
-            print("    {")
-            print(f"        v{my * mv} = _mm256_loadu_pd(&V[i + (g + 1) * ldv]);")
-            print(f"        v{my * mv + 1} = _mm256_loadu_pd(&V[i + (g + 1) * ldv + 4]);")
-
-            tmp = mv
-            for i in range(my):
-                offset_i = f"(k + {i}) " if i != 0 else "k "
-                offset_j = f" + (g - {i}) * ldg " if i != 0 else " + g * ldg"
-                print(f"        gamma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j}]);")
-                print(f"        sigma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j} + 1]);")
-                
-                for v in range(mv):
-                    print(f"        tmp = v{tmp+v };")
-                    print(f"        v{tmp+v } = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{tmp+v+mv}));")
-                    print(f"        v{tmp+v+mv} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{tmp+v+mv}), _mm256_mul_pd(sigma, tmp));")
-                    # tmp -= 1
-                tmp -= 2
-
-            print(f"        _mm256_storeu_pd(&V[i + (g - {my - 1}) * ldv], v0);")
-            print(f"        _mm256_storeu_pd(&V[i + (g - {my - 1}) * ldv + 4], v1);")
-
-            tmp = 0
-            for i in range(my):
-                for v in range(mv):
-                    print(f"        v{tmp} = v{tmp + mv};")
-                    tmp += 1
-            print("    }")
-
-    for k in range(my - 1):
-        for j in range(my - k - 1):
-            g = k - j
-            i = k + j + 1
-            print(f"    gamma = _mm256_broadcast_sd(&G[2 * (k + {i}) + (n - {my - g}) * ldg]);")
-            print(f"    sigma = _mm256_broadcast_sd(&G[2 * (k + {i}) + (n - {my - g}) * ldg + 1]);")
-            for v in range(mv):
-                print(f"    tmp = v{v};")
-                print(f"    v{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{v + mv}));")
-                print(f"    v{v + mv} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{v + mv}), _mm256_mul_pd(sigma, tmp));")
-            tmp = 0
-
+    
+    #  loading for starting phase
     for y in range(my):
         for v in range(mv):
-            offset_i = f"ldv + 4" if v != 0 else "ldv"
-            print(f"    _mm256_storeu_pd(&V[i + (n - {my - y}) * {offset_i}], v{tmp});")
-            tmp += 1
+            # offset_y = f" +  ldv " if y == 1 else f" +  {y} * ldv"
+            if y == 0:
+                offset_y = ""
+            elif y == 1:
+                offset_y = " + ldv"
+            else :
+                offset_y = f" + {y} * ldv"    
+            offset_v = f" + 4" if v !=0 else ""
+            print(f"v{y}{v} = _mm256_loadu_pd(&V[i{offset_y}{offset_v}]);")
+    
+    # computing for givens rotation
+   
+    for y in range(my-1):
+        for k in range(y+1):
+            g = y - k
+            
+            offset_i = f" k " if k == 0 else f"(k + {k}) "
+            if g == 0:
+                offset_j = ""
+            elif g == 1:
+                offset_j = " + ldg "
+            else :
+                offset_j = f" {g} * ldg "
+            print(f"    gamma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j}]);")
+            print(f"    sigma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j} + 1]);")
+            for v in range(mv):
+                print(f" tmp = v{g}{v};")
+                print(f" v{g}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{g+1}{v}));")
+                print(f" v{g+1}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{g+1}{v}), _mm256_mul_pd(sigma, tmp));")
+    
+    # Loop
+    print(f"for (int g = {my-1}; g < n - 1; g++)")
+    print("{")
+    for v in range(mv):
+        offset_v = f"i + (g + 1) * ldv + 4" if v == 0 else f"i + (g + 1) * ldv"
+        print(f"v{my}{v }= _mm256_loadu_pd(&V[{offset_v}]);")
+   
+    for y in range(my):
+        offset_zero_k = "k" if y==0 else f"(k + {y})"
+        offset_zero_g = "g" if y == 0 else f"(g - {y})"
+
+        print(f"gamma = _mm256_broadcast_sd(&G[2 * {offset_zero_k} + {offset_zero_g} * ldg]);")
+        print(f"sigma = _mm256_broadcast_sd(&G[2 * {offset_zero_k} + {offset_zero_g} * ldg + 1]);")
+        for v in range(mv):
+            print(f"tmp = v{my-y-1}{v};")
+            print(f" v{my-y-1}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{my-y}{v}));")
+            print(f" v{my-y}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{my-y}{v}), _mm256_mul_pd(sigma, tmp));")
+        
+    # store 
+    for v in range(mv):
+        print(f"_mm256_storeu_pd(&V[i + (g - {my-1}) * ldv], v{0}{v});")
+    
+    for y in range(my):
+        for v in range(mv):
+            print(f"v{y}{v}=v{y+1}{v};")
+    print("}")
+    
+    # remaining
+    for k in range(my-1):
+        for g in range(my-k-1):
+            gg = my - g - 2 
+            ii = k + g + 1
+            print(f"gamma = _mm256_broadcast_sd(&G[2 * (k + {ii}) + (n - {my-gg}) * ldg]);")
+            print(f"sigma = _mm256_broadcast_sd(&G[2 * (k + {ii}) + (n - {my-gg}) * ldg + 1]);")
+            for v in range(mv):
+                print(f"tmp = v{gg}{v};")
+    
+    # store
+    for y in range (my):
+        for v in range(mv):
+            print(f"_mm256_storeu_pd(&V[i + (n - {my-y}) * ldv], v{y}{v});")
+        
+    
+            
+
+            
+            
+            
+            
+
+    
+                
+                
+
+                
+            
+        
+            
+            
+        
 
     print("}")
+
 
 original_stdout = sys.stdout
 fake_stdout = io.StringIO()
