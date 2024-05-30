@@ -29,7 +29,7 @@ def apply_rev_auto_mv(my, mv):
                 if i==1:
                     offset_i = f" + ldv"
                 else:
-                    offset_i = f"{i} * ldv "
+                    offset_i = f"+ {i} * ldv "
             else:
                 offset_i=""
               
