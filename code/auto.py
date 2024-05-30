@@ -29,7 +29,7 @@ def apply_rev_auto_mv_av512(my,mv):
                 offset_y = " + ldv"
             else :
                 offset_y = f" + {y} * ldv"    
-            offset_v = f" + 4" if v !=0 else ""
+            offset_v = f" + 8" if v !=0 else ""
             print(f"v{y}{v} =  _mm512_loadu_pd(&V[i{offset_y}{offset_v}]);")
     
     for y in range(my-1):
@@ -52,7 +52,7 @@ def apply_rev_auto_mv_av512(my,mv):
     print(f"for (int g = {my-1}; g < n - 1; g++)")
     print("{")
     for v in range(mv):
-        offset_v = f"i + (g + 1) * ldv " if v == 0 else f"i + (g + 1) * ldv + 4 "
+        offset_v = f"i + (g + 1) * ldv " if v == 0 else f"i + (g + 1) * ldv + 8 "
         print(f"v{my}{v }= _mm512_loadu_pd(&V[{offset_v}]);")
    
     for y in range(my):
@@ -67,7 +67,7 @@ def apply_rev_auto_mv_av512(my,mv):
             print(f" v{my-y}{v} = _mm512_sub_pd(_mm512_mul_pd(gamma, v{my-y}{v}), _mm512_mul_pd(sigma, tmp));")
     
     for v in range(mv):
-        offset_v = f"i + (g-{my-1}) * ldv " if v == 0 else f"i + (g-{my-1}) * ldv + 4"
+        offset_v = f"i + (g-{my-1}) * ldv " if v == 0 else f"i + (g-{my-1}) * ldv + 8"
         print(f"_mm512_storeu_pd(&V[{offset_v}], v{0}{v});")
     
     for y in range(my):
@@ -88,7 +88,7 @@ def apply_rev_auto_mv_av512(my,mv):
     # store
     for y in range (my):
         for v in range(mv):
-            offset_v = " ldv + 4" if v != 0 else " ldv"
+            offset_v = " ldv + 8" if v != 0 else " ldv"
             print(f"_mm512_storeu_pd(&V[i + (n - {my-y}) *{offset_v}], v{y}{v});")
             
     

@@ -81,6 +81,16 @@ void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, i
         }
     }
 }
+void apply_rev_av512_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my,int mv)
+{
+    for (int i = 0; i < m; i += mv * 8)
+    {
+        for (int k = 0; k < K; k += my)
+        {
+           apply_rev_avx512_mv(k, m, n, G, V, ldv, ldg,i);
+        }
+    }
+}
 void apply_rec_my2_avx(int K, int m, int n, double *G, double *V, int ldv, int ldg)
 {
     __m256d v0, v1, v2, gamma, sigma, tmp;
@@ -506,7 +516,7 @@ int main(int argc, char const *argv[])
     /* code */
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
-    int k = 6;
+    int k = 192;
     int ldv = m + 16;     // >= m
     int ldg = 2 * k + 16; // >= k
 
@@ -526,10 +536,10 @@ int main(int argc, char const *argv[])
         // apply_rev_avx(k, m, n, g, vc, ldv, ldg);
         // applyFrancis(k, m, n, g, v, ldv, ldg);
         // apply_rev_my2(k, m, n, g, vc, ldv, ldg);
-        apply_rec_my2_avx(k, m, n, g, v, ldv, ldg);
-        // apply_rev_my3_avx(k, m, n, g, vc, ldv, ldg);
-        // apply_rev_avx_auto(k, m, n, g, vc, ldv, ldg, 2);
-        apply_rev_avx_auto_mv(k, m, n, g, vc, ldv, ldg, 3,2);
+        // apply_rec_my2_avx(k, m, n, g, v, ldv, ldg);
+        // apply_rev_my3_avx(k, m, n, g, v, ldv, ldg);
+        apply_rev_avx_auto_mv(k, m, n, g, v, ldv, ldg, 3,2);
+        apply_rev_av512_auto_mv(k, m, n, g, vc, ldv, ldg, 3,2);
 
         // apply_rev_my3(k, m, n, g, vc, ldv, ldg, 3);
         printf("%d\n", Check(v, vc, m, n, ldv));
