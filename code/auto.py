@@ -2,13 +2,7 @@ import io
 import sys
 
 def apply_rev_auto_mv_av512(my,mv):
-    print("#include <stdio.h>")
-    print("#include <stdlib.h>")
-    print("#include <string.h>")
-    print("#include <math.h>")
-    print("#include <immintrin.h>")
-    print("#include <pmmintrin.h>")
-    print(" #include \"apply_rev_avx.h\" ")
+
     print("void apply_rev_avx512_mv(int k, int m, int n, double *G, double *V, int ldv, int ldg, int i)")
     print("{")
     str_init = "__m512d "
@@ -95,6 +89,13 @@ def apply_rev_auto_mv_av512(my,mv):
     print("}")
     
 def apply_rev_auto_mv(my, mv):
+    print("#include <stdio.h>")
+    print("#include <stdlib.h>")
+    print("#include <string.h>")
+    print("#include <math.h>")
+    print("#include <immintrin.h>")
+    print("#include <pmmintrin.h>")
+    print("#include \"apply_rev_avx.h\" ")
 
     print("void apply_rev_avx_mv(int k, int m, int n, double *G, double *V, int ldv, int ldg, int i)")
     print("{")
@@ -199,7 +200,7 @@ sys.stdout = fake_stdout
 args = sys.argv
 
 # apply_rev_auto(int(args[1]), int(args[2]))
-apply_rev_auto_mv_av512(int(args[1]), int(args[2]))
+# apply_rev_auto_mv_av512(int(args[1]), int(args[2]))
 apply_rev_auto_mv(int(args[1]), int(args[2]))
 # apply_rev_auto_mv(2, 2)
 
