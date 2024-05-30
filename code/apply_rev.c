@@ -71,22 +71,13 @@ void apply_rev(int K, int m, int n, double *G, double *V, int ldv, int ldg)
         }
     }
 }
-// void apply_rev_avx_auto(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my)
-// {
-//     for (int i = 0; i < m; i += 4)
-//     {
-//         for (int k = 0; k < K; k += my)
-//         {
-//         }
-//     }
-// }
 void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my,int mv)
 {
-    for (int i = 0; i < m; i += mv*4)
+    for (int i = 0; i < m; i += mv * 4)
     {
         for (int k = 0; k < K; k += my)
         {
-            apply_rev_avx_mv(k, m, n, G, V, ldv, ldg, my, i, mv);
+            apply_rev_avx_mv(k, m, n, G, V, ldv, ldg,i);
         }
     }
 }
@@ -515,7 +506,7 @@ int main(int argc, char const *argv[])
     /* code */
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
-    int k = 192;
+    int k = 6;
     int ldv = m + 16;     // >= m
     int ldg = 2 * k + 16; // >= k
 

@@ -10,7 +10,7 @@ def apply_rev_auto_mv(my, mv):
     print("#include <immintrin.h>")
     print("#include <pmmintrin.h>")
     print("#include \"apply_rev_avx.h\"")
-    print("void apply_rev_avx_mv(int k, int m, int n, double *G, double *V, int ldv, int ldg, int my, int i, int mv)")
+    print("void apply_rev_avx_mv(int k, int m, int n, double *G, double *V, int ldv, int ldg, int i)")
     print("{")
 
     str_init = "__m256d "
@@ -58,7 +58,7 @@ def apply_rev_auto_mv(my, mv):
     print(f"for (int g = {my-1}; g < n - 1; g++)")
     print("{")
     for v in range(mv):
-        offset_v = f"i + (g + 1) * ldv + 4" if v == 0 else f"i + (g + 1) * ldv"
+        offset_v = f"i + (g + 1) * ldv " if v == 0 else f"i + (g + 1) * ldv + 4 "
         print(f"v{my}{v }= _mm256_loadu_pd(&V[{offset_v}]);")
    
     for y in range(my):
@@ -74,7 +74,8 @@ def apply_rev_auto_mv(my, mv):
         
     # store 
     for v in range(mv):
-        print(f"_mm256_storeu_pd(&V[i + (g - {my-1}) * ldv], v{0}{v});")
+        offset_v = f"i + (g-{my-1}) * ldv " if v == 0 else f"i + (g-{my-1}) * ldv + 4"
+        print(f"_mm256_storeu_pd(&V[{offset_v}], v{0}{v});")
     
     for y in range(my):
         for v in range(mv):
@@ -90,7 +91,7 @@ def apply_rev_auto_mv(my, mv):
             print(f"sigma = _mm256_broadcast_sd(&G[2 * (k + {ii}) + (n - {my-gg}) * ldg + 1]);")
             for v in range(mv):
                 print(f"tmp = v{gg}{v};")
-                print(f" v{gg}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{gg}{v}));")
+                print(f" v{gg}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{gg+1}{v}));")
                 print(f" v{gg+1}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{gg+1}{v}), _mm256_mul_pd(sigma, tmp));")
     
     # store
