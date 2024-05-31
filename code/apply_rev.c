@@ -80,6 +80,7 @@ void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, i
             apply_rev_avx_mv(k, m, n, G, V, ldv, ldg,i);
         }
     }
+    
 }
 void apply_rev_av512_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my,int mv)
 {

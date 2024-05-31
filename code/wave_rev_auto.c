@@ -170,7 +170,62 @@ void dmatrix_vector_multiply_mt_rev_avx(int k, int m, int n, double *g, double *
         }
     }
 }
-void dmatrix_vector_multiply_mt_auto_single_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg)
+void applywave_avx(int k, int m, int n, double *G, double *V, int ldv, int ldg)
+{
+    if (n < k || k == 1)
+    {
+        applysingle_avx(k, m, n, G, V, ldv, ldg);
+    }
+
+    // startup phase
+    for (int j = 0; j < k - 1; j++)
+    {
+        for (int i = 0, g = j; i < j + 1; i++, g--)
+        {
+            //  printf("A:: %3d %3d\n", g, i);
+
+            double gamma = G[2 * i + g * ldg];
+            double sigma = G[2 * i + g * ldg + 1];
+            double *v = &V[g * ldv];
+            double *v1 = &V[(g + 1) * ldv];
+            applywavemx2_avx(m, gamma, sigma, v, v1);
+            // printf("%d%d\n",g,i);
+        }
+        // printf("\n");
+    }
+
+    // Pipeline phase
+    for (int j = k - 1; j < n - 1; j++)
+    {
+        for (int i = 0, g = j; i < k; i++, g--)
+        {
+            //  printf("A:: %3d %3d\n", g, i);
+            double gamma = G[2 * i + g * ldg];
+            double sigma = G[2 * i + g * ldg + 1];
+            double *v = &V[g * ldv];
+            double *v1 = &V[(g + 1) * ldv];
+            applywavemx2_avx(m, gamma, sigma, v, v1);
+            //  printf("%d%d\n",g,i);
+        }
+        // printf("\n");
+    }
+    // Shutdown phase
+    for (int j = n - k; j < n - 1; j++)
+    {
+        for (int i = j - n + k + 1, g = n - 2; i < k; i++, g--)
+        {
+            //  printf("A:: %3d %3d\n", g, i);
+            double gamma = G[2 * i + g * ldg];
+            double sigma = G[2 * i + g * ldg + 1];
+            double *v = &V[g * ldv];
+            double *v1 = &V[(g + 1) * ldv];
+            applywavemx2_avx(m, gamma, sigma, v, v1);
+            // printf("%d%d\n",g,i);
+        }
+        //  printf("\n");
+    }
+}
+void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg)
 {
 #pragma omp parallel
     {
@@ -189,7 +244,7 @@ void dmatrix_vector_multiply_mt_auto_single_avx(int k, int m, int n, double *g, 
         if (mend > mbegin)
         {
 
-            applysingle_avx(k, mend - mbegin, n, g, v + mbegin, ldv, ldg);
+            applywave_avx(k, mend - mbegin, n, g, v + mbegin, ldv, ldg);
         }
     }
 }
@@ -229,8 +284,9 @@ int main(int argc, char const *argv[])
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
     int k = atoi(argv[2]);
-    // int mx = atoi(argv[3]);
-    // int my = atoi(argv[4]);
+    
+    int my = atoi(argv[3]);
+    int mv = atoi(argv[4]);
 
     int ldv = m;     // >= m
     int ldg = 2 * k; // >= k
@@ -246,22 +302,22 @@ int main(int argc, char const *argv[])
 
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
-    // cv = copyMatrix(v, m, n, ldv);
+    cv = copyMatrix(v, m, n, ldv);
     for (int i = 0; i < 5; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
-        dmatrix_vector_multiply_mt_rev_avx(k, m, n, g, v, ldv, ldg, 2, 1);
+        dmatrix_vector_multiply_mt_rev_avx(k, m, n, g, v, ldv, ldg, my, mv);
         long long int t2 = i64time();
 
-        dmatrix_vector_multiply_mt_auto_single_avx(k, m, n, g, cv, ldv, ldg);
-        printf("%d\n", Check(v, cv, m, n, ldv));
+        // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        // printf("%d %d %d\n",my,mv,Check(v, cv, m, n, ldv));
 
-        // double time1 = (t2 - t1) * 1e-9;
-        // double flop = 6.0 * m * (n - 1) * k;
-        // printf("%dX%d %d %d %f %f %f\n", 2, 1, n, k, (flop / time1) * 1e-9, time1, x);
+        double time1 = (t2 - t1) * 1e-9;
+        double flop = 6.0 * m * (n - 1) * k;
+        printf("%dX%d %d %d %f %f %f\n", my, mv, n, k, (flop / time1) * 1e-9, time1, x);
     }
 
     freedmatrix(v, m, n, ldv);

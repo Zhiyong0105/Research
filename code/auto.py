@@ -118,7 +118,7 @@ def apply_rev_auto_mv(my, mv):
                 offset_y = " + ldv"
             else :
                 offset_y = f" + {y} * ldv"    
-            offset_v = f" + 4" if v !=0 else ""
+            offset_v = f" + 4 * {v}" if v !=0 else ""
             print(f"v{y}{v} = _mm256_loadu_pd(&V[i{offset_y}{offset_v}]);")
     
     # computing for givens rotation
@@ -133,7 +133,7 @@ def apply_rev_auto_mv(my, mv):
             elif g == 1:
                 offset_j = " + ldg "
             else :
-                offset_j = f" {g} * ldg "
+                offset_j = f"+ {g} * ldg "
             print(f"    gamma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j}]);")
             print(f"    sigma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j} + 1]);")
             for v in range(mv):
@@ -145,7 +145,7 @@ def apply_rev_auto_mv(my, mv):
     print(f"for (int g = {my-1}; g < n - 1; g++)")
     print("{")
     for v in range(mv):
-        offset_v = f"i + (g + 1) * ldv " if v == 0 else f"i + (g + 1) * ldv + 4 "
+        offset_v = f"i + (g + 1) * ldv " if v == 0 else f"i + (g + 1) * ldv + 4 * {v} "
         print(f"v{my}{v }= _mm256_loadu_pd(&V[{offset_v}]);")
    
     for y in range(my):
@@ -161,7 +161,7 @@ def apply_rev_auto_mv(my, mv):
         
     # store 
     for v in range(mv):
-        offset_v = f"i + (g-{my-1}) * ldv " if v == 0 else f"i + (g-{my-1}) * ldv + 4"
+        offset_v = f"i + (g-{my-1}) * ldv " if v == 0 else f"i + (g-{my-1}) * ldv + 4 * {v}"
         print(f"_mm256_storeu_pd(&V[{offset_v}], v{0}{v});")
     
     for y in range(my):
@@ -184,7 +184,7 @@ def apply_rev_auto_mv(my, mv):
     # store
     for y in range (my):
         for v in range(mv):
-            offset_v = " ldv + 4" if v != 0 else " ldv"
+            offset_v = f" ldv + 4 * {v}" if v != 0 else " ldv"
             print(f"_mm256_storeu_pd(&V[i + (n - {my-y}) *{offset_v}], v{y}{v});")
         
     

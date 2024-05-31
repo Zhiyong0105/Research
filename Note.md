@@ -55,4 +55,6 @@ cpupower frequency-set -u clock_freq
 ```
 gcc -O3  -march=native wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm 
 ```
-* DO NOT USE FKING LOAD WITHOUT U!!!!!!!!
+```
+echo '1' | sudo tee  /sys/devices/system/cpu/intel_pstate/no_turbo
+```
