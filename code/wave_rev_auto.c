@@ -284,7 +284,7 @@ int main(int argc, char const *argv[])
     int m = atoi(argv[1]); // ROW
     int n = atoi(argv[1]);
     int k = atoi(argv[2]);
-    
+
     int my = atoi(argv[3]);
     int mv = atoi(argv[4]);
 
