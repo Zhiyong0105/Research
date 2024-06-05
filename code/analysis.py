@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 
-k_v = [24,96,192]
+k_v = [24,48,96,192]
 data = pd.read_csv("data/result_sleep.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
 data_op = pd.read_csv("data/result_sleep_op.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
 data_rev = pd.read_csv("result.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])

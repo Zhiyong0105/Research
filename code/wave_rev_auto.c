@@ -139,7 +139,7 @@ void applysingle_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg
 }
 void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
 {
-    for (int i = 0; i < m; i += mv * 4)
+    for (int i = 0; i < m; i += (mv * 4))
     {
         for (int k = 0; k < K; k += my)
         {
@@ -303,7 +303,7 @@ int main(int argc, char const *argv[])
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
     cv = copyMatrix(v, m, n, ldv);
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);
@@ -313,7 +313,7 @@ int main(int argc, char const *argv[])
         long long int t2 = i64time();
 
         // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // printf("%d %d %d\n",my,mv,Check(v, cv, m, n, ldv));
+        // printf("%d %d %d %d\n",my,mv,n,Check(v, cv, m, n, ldv));
 
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
