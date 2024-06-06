@@ -170,6 +170,39 @@ void dmatrix_vector_multiply_mt_rev_avx(int k, int m, int n, double *g, double *
         }
     }
 }
+void apply_rev_avx_auto_mv_avx512(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
+{
+    for (int i = 0; i < m; i += (mv * 8))
+    {
+        for (int k = 0; k < K; k += my)
+        {
+            apply_rev_avx_mv_avx512(k, m, n, G, V, ldv, ldg, i);
+        }
+    }
+}
+void dmatrix_vector_multiply_mt_rev_avx512(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
+{
+#pragma omp parallel
+    {
+
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        // split m
+        int bm = (m + nt - 1) / nt;
+        // bm = (bm+3)/4*4;
+        bm = (bm + 7) / 8 * 8;
+        int mbegin = bm * id < m ? bm * id : m;
+        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+        // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+
+        if (mend > mbegin)
+        {
+
+            apply_rev_avx_auto_mv_avx512(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+        }
+    }
+}
 void applywave_avx(int k, int m, int n, double *G, double *V, int ldv, int ldg)
 {
     if (n < k || k == 1)
@@ -312,12 +345,12 @@ int main(int argc, char const *argv[])
         dmatrix_vector_multiply_mt_rev_avx(k, m, n, g, v, ldv, ldg, my, mv);
         long long int t2 = i64time();
 
-        // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // printf("%d %d %d %d\n",my,mv,n,Check(v, cv, m, n, ldv));
+        dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        printf("%d %d %d %d\n",my,mv,n,Check(v, cv, m, n, ldv));
 
-        double time1 = (t2 - t1) * 1e-9;
-        double flop = 6.0 * m * (n - 1) * k;
-        printf("%dX%d %d %d %f %f %f\n", my, mv, n, k, (flop / time1) * 1e-9, time1, x);
+        // double time1 = (t2 - t1) * 1e-9;
+        // double flop = 6.0 * m * (n - 1) * k;
+        // printf("%dX%d %d %d %f %f %f\n", my, mv, n, k, (flop / time1) * 1e-9, time1, x);
     }
 
     freedmatrix(v, m, n, ldv);
