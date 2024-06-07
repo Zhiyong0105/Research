@@ -22,22 +22,22 @@ Groupmean_data_rev_avx512_mean= Groupmean_data_rev_avx512_mean.reset_index()
 Groupmean_data_op_mean= data_op.groupby(["name","n","k"]).mean()
 Groupmean_data_op_mean = Groupmean_data_op_mean.reset_index()
 
-for k in k_v:
-    plt.figure(figsize=(8, 6))
-    for name in Groupmean_data_rev_avx512_mean["name"].unique():
-        sub = Groupmean_data_rev_avx512_mean[(Groupmean_data_rev_avx512_mean["name"] == name) & (Groupmean_data_rev_avx512_mean['k'] == k)]
-        if not sub.empty:
-            if name == '3X3':
-                plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='-', marker='o')
-            else:
-                plt.plot(sub['n'], sub['gflops'], label=name, linestyle='--', marker='o')
-    plt.legend()
-    plt.xlabel('n')
-    plt.ylabel('gflops')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("picture/G_husing_rev_avx512_{}.pdf".format(k))
-    plt.close()
+# for k in k_v:
+#     plt.figure(figsize=(8, 6))
+#     for name in Groupmean_data_rev_avx512_mean["name"].unique():
+#         sub = Groupmean_data_rev_avx512_mean[(Groupmean_data_rev_avx512_mean["name"] == name) & (Groupmean_data_rev_avx512_mean['k'] == k)]
+#         if not sub.empty:
+#             if name == '3X3':
+#                 plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='-', marker='o')
+#             else:
+#                 plt.plot(sub['n'], sub['gflops'], label=name, linestyle='--', marker='o')
+#     plt.legend()
+#     plt.xlabel('n')
+#     plt.ylabel('gflops')
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig("picture/G_husing_rev_avx512_{}.pdf".format(k))
+#     plt.close()
     
 for k in k_v:
     plt.figure(figsize=(8, 6))
@@ -53,7 +53,7 @@ for k in k_v:
     plt.ylabel('gflops')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("picture/G_husing_rev_{}.pdf".format(k))
+    plt.savefig("picture/G_husing_rev_{}.png".format(k))
     plt.close()
     
 # for k in k_v:

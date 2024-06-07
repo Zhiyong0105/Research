@@ -5,5 +5,6 @@
 void apply_rev_avx();
 void apply_rev_avx_mv();
 void apply_rev_avx512_mv();
+void apply_rev_avx_mv_seq();
 
 #endif
