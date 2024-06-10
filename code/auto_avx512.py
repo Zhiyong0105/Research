@@ -111,7 +111,7 @@ def apply_rev_auto_mv_seq(my,mv):
     print("void apply_rev_avx_mv_seq(int k,int m, int n, double *G, double *V,int ldg)")
     print("{")
 
-    str_init = "__m256d "
+    str_init = "__m512d "
     for y in range(my+1):
         for v in range(mv):
             str_init += f" v{y}{v}, "
@@ -122,9 +122,9 @@ def apply_rev_auto_mv_seq(my,mv):
     #  loading for starting phase
     for y in range(my):
         for v in range(mv):
-            offset_x = f"{4* mv * y}"
-            offset_y =  f"{4*v}"
-            print(f"v{y}{v} = _mm256_loadu_pd(&V[{offset_x} + {offset_y}]);")
+            offset_x = f"{8* mv * y}"
+            offset_y =  f"{8*v}"
+            print(f"v{y}{v} = _mm512_loadu_pd(&V[{offset_x} + {offset_y}]);")
 
     
     # computing for givens rotation
@@ -138,36 +138,36 @@ def apply_rev_auto_mv_seq(my,mv):
                 offset_j = " + k * ldg"
             else:
                 offset_j = f" + (k + {k}) * ldg "
-            print(f"    gamma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j}]);")
-            print(f"    sigma = _mm256_broadcast_sd(&G[2 * {offset_i}{offset_j} + 1]);")
+            print(f"    gamma = _mm512_set1_pd(G[2 * {offset_i}{offset_j}]);")
+            print(f"    sigma = _mm512_set1_pd(G[2 * {offset_i}{offset_j} + 1]);")
             for v in range(mv):
                 print(f" tmp = v{g}{v};")
-                print(f" v{g}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{g+1}{v}));")
-                print(f" v{g+1}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{g+1}{v}), _mm256_mul_pd(sigma, tmp));")
+                print(f" v{g}{v} = _mm512_add_pd(_mm512_mul_pd(gamma, tmp), _mm512_mul_pd(sigma, v{g+1}{v}));")
+                print(f" v{g+1}{v} = _mm512_sub_pd(_mm512_mul_pd(gamma, v{g+1}{v}), _mm512_mul_pd(sigma, tmp));")
     
     # Loop
     print(f"for (int g = {my-1}; g < n - 1; g++)")
     print("{")
     for v in range(mv):
-            offset_x = f"(g + 1) * {4 * mv}"
-            offset_y = f"0" if v == 0 else f"{4*v}"
-            print(f"v{my}{v} = _mm256_loadu_pd(&V[{offset_x} + {offset_y}]);")
+            offset_x = f"(g + 1) * {8 * mv}"
+            offset_y = f"0" if v == 0 else f"{8*v}"
+            print(f"v{my}{v} = _mm512_loadu_pd(&V[{offset_x} + {offset_y}]);")
    
     for y in range(my):
         offset_zero_k = "k" if y==0 else f"(k + {y})"
         offset_zero_g = "g" if y == 0 else f"(g - {y})"
 
-        print(f"gamma = _mm256_broadcast_sd(&G[2 * {offset_zero_g} + {offset_zero_k} * ldg]);")
-        print(f"sigma = _mm256_broadcast_sd(&G[2 * {offset_zero_g} + {offset_zero_k} * ldg + 1]);")
+        print(f"gamma = _mm512_set1_pd(G[2 * {offset_zero_g} + {offset_zero_k} * ldg]);")
+        print(f"sigma = _mm512_set1_pd(G[2 * {offset_zero_g} + {offset_zero_k} * ldg + 1]);")
         for v in range(mv):
             print(f"tmp = v{my-y-1}{v};")
-            print(f" v{my-y-1}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{my-y}{v}));")
-            print(f" v{my-y}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{my-y}{v}), _mm256_mul_pd(sigma, tmp));")
+            print(f" v{my-y-1}{v} = _mm512_add_pd(_mm512_mul_pd(gamma, tmp), _mm512_mul_pd(sigma, v{my-y}{v}));")
+            print(f" v{my-y}{v} = _mm512_sub_pd(_mm512_mul_pd(gamma, v{my-y}{v}), _mm512_mul_pd(sigma, tmp));")
         
     # store 
     for v in range(mv):
-        offset_v = f"{4 * mv} * (g - {my-1})" if v == 0 else f"{4 * mv} * (g - {my-1}) + 4 * {v}"
-        print(f"_mm256_storeu_pd(&V[{offset_v}], v{0}{v});")
+        offset_v = f"{8 * mv} * (g - {my-1})" if v == 0 else f"{8 * mv} * (g - {my-1}) + 8 * {v}"
+        print(f"_mm512_storeu_pd(&V[{offset_v}], v{0}{v});")
     
     for y in range(my):
         for v in range(mv):
@@ -181,19 +181,19 @@ def apply_rev_auto_mv_seq(my,mv):
             ii = k + g + 1
             offset_zero_g = f"(n - {my-gg})"
             offset_zero_k = f"(k + {ii})"
-            print(f"gamma = _mm256_broadcast_sd(&G[2 * {offset_zero_g} + {offset_zero_k} * ldg]);")
-            print(f"sigma = _mm256_broadcast_sd(&G[2 * {offset_zero_g} + {offset_zero_k} * ldg + 1]);")
+            print(f"gamma = _mm512_set1_pd(G[2 * {offset_zero_g} + {offset_zero_k} * ldg]);")
+            print(f"sigma = _mm512_set1_pd(G[2 * {offset_zero_g} + {offset_zero_k} * ldg + 1]);")
             for v in range(mv):
                 print(f"tmp = v{gg}{v};")
-                print(f" v{gg}{v} = _mm256_add_pd(_mm256_mul_pd(gamma, tmp), _mm256_mul_pd(sigma, v{gg+1}{v}));")
-                print(f" v{gg+1}{v} = _mm256_sub_pd(_mm256_mul_pd(gamma, v{gg+1}{v}), _mm256_mul_pd(sigma, tmp));")
+                print(f" v{gg}{v} = _mm512_add_pd(_mm512_mul_pd(gamma, tmp), _mm512_mul_pd(sigma, v{gg+1}{v}));")
+                print(f" v{gg+1}{v} = _mm512_sub_pd(_mm512_mul_pd(gamma, v{gg+1}{v}), _mm512_mul_pd(sigma, tmp));")
     
     # store
     for y in range (my):
         for v in range(mv):
-            offset_x = f"{mv * 4}"
-            offset_v = f"+ 4 * {v}" if v != 0 else ""
-            print(f"_mm256_storeu_pd(&V[{offset_x} * (n - {my-y}){offset_v}], v{y}{v});")
+            offset_x = f"{mv * 8}"
+            offset_v = f"+ 8 * {v}" if v != 0 else ""
+            print(f"_mm512_storeu_pd(&V[{offset_x} * (n - {my-y}){offset_v}], v{y}{v});")
         
     
     
