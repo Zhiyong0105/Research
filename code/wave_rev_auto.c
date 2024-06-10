@@ -243,6 +243,7 @@ void apply_rev_avx_auto_mv_seq(int K, int m, int n, double *G, double *V, int ld
         // Check_seq(mv * 4, n, V, v_seq, ldv,i);
     }
 }
+
 void dmatrix_vector_multiply_mt_rev_avx_seq(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
 {
 #pragma omp parallel
@@ -266,6 +267,97 @@ void dmatrix_vector_multiply_mt_rev_avx_seq(int k, int m, int n, double *g, doub
         }
     }
 }
+double *creat_left_seq(int m, int n, double *V, int ldv, int i, int m_left)
+{
+    double *tmp = (double *)malloc(sizeof(double) * m * n);
+    int count = 0;
+
+    for (int y = 0; y < n; y++)
+    {
+        for (int x = i; x < i + m; x++)
+        {
+            if (x < i + m_left)
+            {
+                tmp[count] = V[x + y * ldv];
+            }
+            else
+            {
+                tmp[count] = 0;
+            }
+            count++;
+        }
+    }
+    return tmp;
+}
+void recover_seq_left(int m, int n, double *V, double *V_seq, int ldv, int i, int m_left)
+{
+    int count = 0;
+
+    for (int y = 0; y < n; y++)
+    {
+        for (int x = i; x < i + m_left; x++)
+        {
+            V[x + y * ldv] = V_seq[count];
+            count++;
+        }
+        count += (m - m_left);
+    }
+}
+void apply_rev_avx_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
+{
+    // double *vv = (double *)calloc(sizeof(double) * (mv * 4 * n), 1);
+    int m_iter = m / (mv * 4);
+    int m_left = m % (mv * 4);
+    int M = m_iter * (mv * 4);
+    for (int i = 0; i < M; i += (mv * 4))
+    {
+        double *v_seq = copy_seq(mv * 4, n, V, ldv, i);
+        // printf("%d\n",i);
+        // Check_seq(mv * 4, n, V, v_seq, ldv,i);
+        for (int k = 0; k < K; k += my)
+        {
+
+            apply_rev_avx_mv_seq(k, m, n, G, v_seq, ldg);
+        }
+
+        recover_seq(mv * 4, n, V, v_seq, ldv, i);
+        // Check_seq(mv * 4, n, V, v_seq, ldv,i);
+    }
+    if (m_left != 0)
+    {
+        double *v_seq_left = creat_left_seq(mv * 4, n, V, ldv, M, m_left);
+        for (int k = 0; k < K; k += my)
+        {
+            apply_rev_avx_mv_seq(k, m, n, G, v_seq_left, ldg);
+        }
+
+        recover_seq_left(mv * 4, n, V, v_seq_left, ldv, M,m_left);
+    }
+}
+void dmatrix_vector_multiply_mt_rev_avx_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
+{
+#pragma omp parallel
+    {
+
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+        // split m
+        int bm = (m + nt - 1) / nt;
+        // bm = (bm+3)/4*4;
+        bm = (bm + 7) / 8 * 8;
+        int mbegin = bm * id < m ? bm * id : m;
+        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+        // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+
+        if (mend > mbegin)
+        {
+
+            apply_rev_avx_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+        }
+    }
+}
+
 void dmatrix_vector_multiply_mt_rev_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
 {
 #pragma omp parallel
@@ -458,14 +550,15 @@ int main(int argc, char const *argv[])
     cv = copyMatrix(v, m, n, ldv);
     // printf("%p¥n", cv); fflush(stdout);
     // ldv
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
         // dmatrix_vector_multiply_mt_rev_avx(k, m, n, g, v, ldv, ldg, my, mv);
-        dmatrix_vector_multiply_mt_rev_avx_seq(k, m, n, g, v, ldv, ldg, my, mv);
+        // dmatrix_vector_multiply_mt_rev_avx_seq(k, m, n, g, v, ldv, ldg, my, mv);
+        dmatrix_vector_multiply_mt_rev_avx_seq_ALL(k, m, n, g, v, ldv, ldg, my, mv);
         long long int t2 = i64time();
 
         // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);

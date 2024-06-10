@@ -53,7 +53,7 @@ for k in k_v:
     plt.ylabel('gflops')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("picture/G_husing_rev_{}.png".format(k))
+    plt.savefig("picture/G_husing_rev_new_{}.png".format(k))
     plt.close()
     
 # for k in k_v:
