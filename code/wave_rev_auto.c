@@ -550,7 +550,7 @@ int main(int argc, char const *argv[])
     cv = copyMatrix(v, m, n, ldv);
     // printf("%p¥n", cv); fflush(stdout);
     // ldv
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 5; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);

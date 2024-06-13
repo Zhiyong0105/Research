@@ -58,3 +58,9 @@ gcc -O3  -march=native wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp
 ```
 echo '1' | sudo tee  /sys/devices/system/cpu/intel_pstate/no_turbo
 ```
+```
+perf stat -e L2_RQSTS.REFERENCES,L2_RQSTS.RFO_HIT,L2_RQSTS.RFO_MISS,MEM_LOAD_RETIRED.L2_HIT,MEM_LOAD_RETIRED.L2_MISS,LLC-loads,LLC-load-misses
+```
+```
+perf list
+```
