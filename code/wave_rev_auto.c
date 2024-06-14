@@ -187,7 +187,7 @@ double *copy_seq(int m, int n, double *V, int ldv, int i)
 void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
 {
     int count = 0;
-    double *tmp = (double *)malloc(sizeof(double) * m * n);
+    
     for (int y = 0; y < n; y++)
     {
         for (int x = i; x < i + m; x++)
@@ -196,6 +196,7 @@ void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
             count++;
         }
     }
+    free(V_seq);
 }
 void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
 {
@@ -302,6 +303,7 @@ void recover_seq_left(int m, int n, double *V, double *V_seq, int ldv, int i, in
         }
         count += (m - m_left);
     }
+    free(V_seq);
 }
 void apply_rev_avx_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
 {
@@ -321,6 +323,7 @@ void apply_rev_avx_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V, in
         }
 
         recover_seq(mv * 4, n, V, v_seq, ldv, i);
+
         // Check_seq(mv * 4, n, V, v_seq, ldv,i);
     }
     if (m_left != 0)
