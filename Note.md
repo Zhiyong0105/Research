@@ -64,3 +64,8 @@ perf stat -e L2_RQSTS.REFERENCES,L2_RQSTS.RFO_HIT,L2_RQSTS.RFO_MISS,MEM_LOAD_RET
 ```
 perf list
 ```
+```
+gcc -s / objdump -d
+```
+vanzeeらの実験比較
+perf miss/op memory  
