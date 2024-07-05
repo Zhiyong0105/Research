@@ -69,3 +69,7 @@ gcc -s / objdump -d
 ```
 vanzeeらの実験比較
 perf miss/op memory  
+
+```
+OMP_PROC_BIND=close OMP_PLACES=cores
+```

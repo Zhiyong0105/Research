@@ -332,6 +332,8 @@ void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
     int count = 0;
     for (int y = 0; y < n; y++)
     {
+        mm_prefetch(&V[i+y*ldv], _MM_HINT_T2);
+        mm_prefetch(&tmp[count], _MM_HINT_T0);
         memcpy(&tmp[count], &V[i + y * ldv], m * sizeof(double));
         count += m;
     }

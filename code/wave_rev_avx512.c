@@ -470,25 +470,57 @@ void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
     _mm_free(v_seq_left);
 }
 
+// void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
+// {
+// #pragma omp parallel
+//     {
+
+//         int nt = omp_get_num_threads();
+//         int id = omp_get_thread_num();
+//         // split m
+//         // int bm = (m + nt - 1) / nt;
+//         // // bm = (bm+3)/4*4;
+//         // bm = (bm + 7) / 8 * 8;
+//         int bm = (m + nt - 1) / nt;
+//         bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
+
+//         int mbegin = bm * id < m ? bm * id : m;
+//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+//         // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+
+//         if (mend > mbegin)
+//         {
+
+//             apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+//         }
+//     }
+// }
 void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
 {
 #pragma omp parallel
     {
-
-        int nt = omp_get_num_threads();
+        int nt = 8; // 固定使用8个线程
         int id = omp_get_thread_num();
-        // split m
+
+        // 计算每个线程处理的基本块大小
         int bm = (m + nt - 1) / nt;
-        // bm = (bm+3)/4*4;
-        bm = (bm + 15) / 16 * 16;
+
+        // 调整块大小以适应mv * 8的倍数
+        bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
+
+        // 计算每个线程的开始和结束位置
         int mbegin = bm * id < m ? bm * id : m;
         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
 
-        // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
+        // 处理剩余块，如果不能整除则将剩余部分分配给最后一个线程
+        if (id == nt - 1 && mend < m)
+        {
+            mend = m;
+        }
 
         if (mend > mbegin)
         {
-
             apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
         }
     }
@@ -671,10 +703,10 @@ int main(int argc, char const *argv[])
     int ldv = m;           // >= m
     int ldg = 2 * (n - 1); // >= k
     // ldv = ceil((4*mv*8)/64) * 64;
-    if ((ldv % (4096 / 16)) == 0)
-        ldv += 32;
-    if ((ldg % (4096 / 16)) == 0)
-        ldg += 32;
+    if ((ldv % (4096 / 8)) == 0)
+        ldv += 16;
+    if ((ldg % (4096 / 8)) == 0)
+        ldg += 16;
 
     /* code */
     double *v = dmatrix(m, n, ldv);
@@ -686,7 +718,7 @@ int main(int argc, char const *argv[])
     cv = copyMatrix(v, m, n, ldv);
     // printf("%p¥n", cv); fflush(stdout);
     // ldv
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);
