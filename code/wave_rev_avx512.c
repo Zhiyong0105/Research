@@ -10,6 +10,7 @@
 #include <immintrin.h>
 #include <sys/mman.h>
 #include "apply_rev_avx.h"
+
 #define EPSILON 1e-12
 
 int64_t
@@ -156,116 +157,7 @@ void applysingle_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg
         }
     }
 }
-// void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
-// {
-//     double* vv = (double*)calloc(sizeof(double)*(mv*4*n), 1);
-//     for (int i = 0; i < m; i += (mv * 4))
-//     {
-//         for (int k = 0; k < K; k += my)
-//         {
-//             // apply_rev_avx_mv(k, m, n, G, V, ldv, ldg, i);
-//             apply_rev_avx_mv(k, m, n, G, vv - i, 4 * mv, ldg, i);
-//         }
-//     }
-//     free(vv);
-// }
-// double *copy_seq(int m, int n, double *V, int ldv, int i)
-// {
-//     double *tmp = (double *)malloc(sizeof(double) * m * n);
-//     int count = 0;
 
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m; x++)
-//         {
-//             tmp[count] = V[x + y * ldv];
-//             count++;
-//         }
-//     }
-//     return tmp;
-// }
-// double *copy_seq(int m, int n, double *V, int ldv, int i)
-// {
-//     double *tmp = (double *)malloc(sizeof(double) * m * n);
-//     if (!tmp)
-//     {
-//         fprintf(stderr, "Memory allocation failed\n");
-//         exit(EXIT_FAILURE);
-//     }
-//     int count = 0;
-
-//     for (int y = 0; y < n; y++)
-//     {
-//         // 使用 memcpy 复制每行的连续块
-//         memcpy(tmp + count, V + i + y * ldv, m * sizeof(double));
-//         count += m;
-//     }
-//     return tmp;
-// }
-// void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
-// {
-//     int count = 0;
-//     double *tmp = (double *)malloc(sizeof(double) * m * n);
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m; x++)
-//         {
-//             V[x + y * ldv] = V_seq[count];
-//             count++;
-//         }
-//     }
-//     free(V_seq);
-// }
-
-// void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
-// {
-//     int count = 0;
-//     for (int y = 0; y < n; y++)
-//     {
-//         memcpy(&tmp[count], &V[i + y * ldv], m * sizeof(double));
-//         count += m;
-//     }
-// }
-// void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
-// {
-//     int count = 0;
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m; x++)
-//         {
-//             tmp[count] = V[x + y * ldv];
-//             count++;
-//         }
-//     }
-// }
-
-// void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
-// {
-//     int count = 0;
-
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m; x++)
-//         {
-//             V[x + y * ldv] = V_seq[count];
-//             count++;
-//         }
-//     }
-//     // free(V_seq);
-// }
-// void apply_rev_avx_auto_mv(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
-// {
-//     // double *vv = (double *)calloc(sizeof(double) * (mv * 4 * n), 1);
-//     for (int i = 0; i < m; i += (mv * 4))
-//     {
-//         double *v_seq = copy_seq(mv * 4, n, V, ldv, i);
-//         for (int k = 0; k < K; k += my)
-//         {
-
-//             apply_rev_avx_mv(k, m, n, G, V, ldv, ldg, i);
-//         }
-//     }
-// }
 void Check_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
 {
     int count = 0;
@@ -280,166 +172,70 @@ void Check_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
         printf("\n");
     }
 }
-// void apply_rev_avx_auto_mv_seq(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
-// {
-//     // double *vv = (double *)calloc(sizeof(double) * (mv * 4 * n), 1);
-//     for (int i = 0; i < m; i += (mv * 4))
-//     {
-//         double *v_seq = copy_seq(mv * 4, n, V, ldv, i);
-//         // printf("%d\n",i);
-//         // Check_seq(mv * 4, n, V, v_seq, ldv,i);
-//         for (int k = 0; k < K; k += my)
-//         {
-
-//             apply_rev_avx_mv_seq(k, m, n, G, v_seq, ldg);
-//         }
-
-//         recover_seq(mv * 4, n, V, v_seq, ldv, i);
-//         // Check_seq(mv * 4, n, V, v_seq, ldv,i);
-//     }
-// }
-
-// void dmatrix_vector_multiply_mt_rev_avx_seq(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
-// {
-// #pragma omp parallel
-//     {
-
-//         int nt = omp_get_num_threads();
-//         int id = omp_get_thread_num();
-//         // split m
-//         int bm = (m + nt - 1) / nt;
-//         // bm = (bm+3)/4*4;
-//         bm = (bm + 7) / 8 * 8;
-//         int mbegin = bm * id < m ? bm * id : m;
-//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
-
-//         // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
-
-//         if (mend > mbegin)
-//         {
-
-//             apply_rev_avx_auto_mv_seq(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
-//         }
-//     }
-// }
-// double *creat_left_seq(int m, int n, double *V, int ldv, int i, int m_left)
-// {
-//     double *tmp = (double *)malloc(sizeof(double) * m * n);
-//     int count = 0;
-
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m; x++)
-//         {
-//             if (x < i + m_left)
-//             {
-//                 tmp[count] = V[x + y * ldv];
-//             }
-//             else
-//             {
-//                 tmp[count] = 0;
-//             }
-//             count++;
-//         }
-//     }
-//     return tmp;
-// }
-// void recover_seq_left(int m, int n, double *V, double *V_seq, int ldv, int i, int m_left)
-// {
-//     int count = 0;
-
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m_left; x++)
-//         {
-//             V[x + y * ldv] = V_seq[count];
-//             count++;
-//         }
-//         count += (m - m_left);
-//     }
-
-// }
-// void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
-// {
-//     int count = 0;
-//     for (int y = 0; y < n; y++)
-//     {
-//         memcpy(&tmp[count], &V[i + y * ldv], m * sizeof(double));
-//         count += m;
-//     }
-// }
-// void copy_seq(int m, int n, double *V, double *tmp,int ldv, int i)
-// {
-//     int count = 0;
-//         for (int y = 0; y < n; y++)
-//         {
-//             for (int x = i; x < i + m; x++)
-//             {
-//                 tmp[count] = V[x + y * ldv];
-//                 count++;
-//             }
-//         }
-// }
-// void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
-// {
-//     int count = 0;
-
-//     for (int y = 0; y < n; y++)
-//     {
-//         for (int x = i; x < i + m; x++)
-//         {
-//             V[x + y * ldv] = V_seq[count];
-//             count++;
-//         }
-//     }
-//     // free(V_seq);
-// }
 
 void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
 {
     int count = 0;
-
     for (int y = 0; y < n; y++)
     {
-        memcpy(&tmp[count], &V[i + y * ldv], m * sizeof(double));
+        _mm_prefetch((const char *)&V[i + y * ldv], _MM_HINT_T1);
+        for (int j = 0; j < m; j += 8)
+        {
+            __m512d data = _mm512_load_pd(&V[i + y * ldv + j]);
+            _mm512_store_pd(&tmp[count + j], data);
+        }
         count += m;
     }
 }
+
 void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
 {
     int count = 0;
-
     for (int y = 0; y < n; y++)
     {
-        memcpy(&V[i + y * ldv], &V_seq[count], m * sizeof(double));
+        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T1);
+        for (int j = 0; j < m; j += 8)
+        {
+            __m512d data = _mm512_load_pd(&V_seq[count + j]);
+            _mm512_store_pd(&V[i + y * ldv + j], data);
+        }
         count += m;
     }
 }
+
 void creat_left_seq(int m, int n, double *V, double *V_left, int ldv, int i, int m_left)
 {
     int count = 0;
-#pragma omp parallel for
     for (int y = 0; y < n; y++)
     {
         int base_index = y * ldv + i;
-        memcpy(&V_left[count], &V[base_index], m_left * sizeof(double));
-        count += m_left;
-        memset(&V_left[count], 0, (m - m_left) * sizeof(double)); // 剩余部分填充0
-        count += (m - m_left);
+        _mm_prefetch((const char *)&V[base_index], _MM_HINT_T1);
+        for (int j = 0; j < m_left; j += 8)
+        {
+            __m512d data = _mm512_load_pd(&V[base_index + j]);
+            _mm512_store_pd(&V_left[count + j], data);
+        }
+        memset(&V_left[count + m_left], 0, (m - m_left) * sizeof(double));
+        count += m;
     }
 }
+
 void recover_seq_left(int m, int n, double *V, double *V_seq, int ldv, int i, int m_left)
 {
     int count = 0;
-
     for (int y = 0; y < n; y++)
     {
         int base_index = y * ldv + i;
-        memcpy(&V[base_index], &V_seq[count], m_left * sizeof(double));
-        count += m_left;
-        count += (m - m_left);
+        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T1);
+        for (int j = 0; j < m_left; j += 8)
+        {
+            __m512d data = _mm512_load_pd(&V_seq[count + j]);
+            _mm512_store_pd(&V[base_index + j], data);
+        }
+        count += m;
     }
 }
+
 void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
 {
     int m_iter = m / (mv * 8);
@@ -447,11 +243,13 @@ void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
     int M = m_iter * (mv * 8);
     double *v_seq = (double *)_mm_malloc(sizeof(double) * (mv * 8) * n, 64);
     double *v_seq_left = (double *)_mm_malloc(sizeof(double) * (mv * 8) * n, 64);
+
     for (int i = 0; i < M; i += (mv * 8))
     {
         copy_seq(mv * 8, n, V, v_seq, ldv, i);
         for (int k = 0; k < K; k += my)
         {
+            _mm_prefetch((const char *)&G[k * ldg], _MM_HINT_T1);
             apply_rev_avx_mv_seq(k, m, n, G, v_seq, ldg);
         }
         recover_seq(mv * 8, n, V, v_seq, ldv, i);
@@ -463,6 +261,7 @@ void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
         creat_left_seq(mv * 8, n, V, v_seq_left, ldv, M, m_left);
         for (int k = 0; k < K; k += my)
         {
+            _mm_prefetch((const char *)&G[k * ldg], _MM_HINT_T1);
             apply_rev_avx_mv_seq(k, m, n, G, v_seq_left, ldg);
         }
         recover_seq_left(mv * 8, n, V, v_seq_left, ldv, M, m_left);
@@ -470,118 +269,25 @@ void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
     _mm_free(v_seq_left);
 }
 
-// void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
-// {
-// #pragma omp parallel
-//     {
-
-//         int nt = omp_get_num_threads();
-//         int id = omp_get_thread_num();
-//         // split m
-//         // int bm = (m + nt - 1) / nt;
-//         // // bm = (bm+3)/4*4;
-//         // bm = (bm + 7) / 8 * 8;
-//         int bm = (m + nt - 1) / nt;
-//         bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
-
-//         int mbegin = bm * id < m ? bm * id : m;
-//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
-
-//         // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
-
-//         if (mend > mbegin)
-//         {
-
-//             apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
-//         }
-//     }
-// }
 void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
 {
 #pragma omp parallel
     {
-        int nt = 8; // 固定使用8个线程
+
+        int nt = omp_get_num_threads();
         int id = omp_get_thread_num();
 
-        // 计算每个线程处理的基本块大小
         int bm = (m + nt - 1) / nt;
 
-        // 调整块大小以适应mv * 8的倍数
         bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
 
-        // 计算每个线程的开始和结束位置
         int mbegin = bm * id < m ? bm * id : m;
         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
 
-        // 处理剩余块，如果不能整除则将剩余部分分配给最后一个线程
-        if (id == nt - 1 && mend < m)
-        {
-            mend = m;
-        }
-
-        if (mend > mbegin)
-        {
-            apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
-        }
+        apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
     }
 }
 
-// void dmatrix_vector_multiply_mt_rev_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
-// {
-// #pragma omp parallel
-//     {
-
-//         int nt = omp_get_num_threads();
-//         int id = omp_get_thread_num();
-//         // split m
-//         int bm = (m + nt - 1) / nt;
-//         // bm = (bm+3)/4*4;
-//         bm = (bm + 7) / 8 * 8;
-//         int mbegin = bm * id < m ? bm * id : m;
-//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
-
-//         // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
-
-//         if (mend > mbegin)
-//         {
-
-//             apply_rev_avx_auto_mv(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
-//         }
-//     }
-// }
-// void apply_rev_avx_auto_mv_avx512(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
-// {
-//     for (int i = 0; i < m; i += (mv * 8))
-//     {
-//         for (int k = 0; k < K; k += my)
-//         {
-//             apply_rev_avx_mv_avx512(k, m, n, G, V, ldv, ldg, i);
-//         }
-//     }
-// }
-// void dmatrix_vector_multiply_mt_rev_avx512(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
-// {
-// #pragma omp parallel
-//     {
-
-//         int nt = omp_get_num_threads();
-//         int id = omp_get_thread_num();
-//         // split m
-//         int bm = (m + nt - 1) / nt;
-//         // bm = (bm+3)/4*4;
-//         bm = (bm + 7) / 8 * 8;
-//         int mbegin = bm * id < m ? bm * id : m;
-//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
-
-//         // printf("%d %d %d\n",mbegin,mend,mend-mbegin);
-
-//         if (mend > mbegin)
-//         {
-
-//             apply_rev_avx_auto_mv_avx512(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
-//         }
-//     }
-// }
 void applywave_avx(int k, int m, int n, double *G, double *V, int ldv, int ldg)
 {
     if (n < k || k == 1)
@@ -718,7 +424,7 @@ int main(int argc, char const *argv[])
     cv = copyMatrix(v, m, n, ldv);
     // printf("%p¥n", cv); fflush(stdout);
     // ldv
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 5; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);
