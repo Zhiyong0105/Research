@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include "apply_rev_avx.h"
 #include <unistd.h>
+
 #define EPSILON 1e-12
 
 int64_t
