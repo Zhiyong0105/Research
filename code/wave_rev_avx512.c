@@ -197,7 +197,7 @@ void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
         for (int j = 0; j < m; j += 8)
         {
             __m512d data = _mm512_load_pd(&V_seq[count + j]);
-            _mm512_store_pd(&V[i + y * ldv + j], data);
+            _mm512_store_pd(&V[i + y * ldv + j], data);// stream
         }
         count += m;
     }
