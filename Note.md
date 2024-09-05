@@ -77,3 +77,6 @@ OMP_PROC_BIND=close OMP_PLACES=cores
 3*3
 
 n*y
+
+## Sep 5
+* ヒュージングサイズ`3X3`周りを試す
