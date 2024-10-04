@@ -18,6 +18,7 @@ i64time()
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (int64_t)ts.tv_sec * (1000000000ull) + (int64_t)ts.tv_nsec;
 }
+
 void *hugealloc(size_t size)
 {
     size_t pagesize = 2 * 1024 * 1024;
@@ -26,16 +27,19 @@ void *hugealloc(size_t size)
     madvise(base_ptr_, size, MADV_HUGEPAGE);
     return base_ptr_;
 }
+
 void hugefree(void *ptr, size_t size)
 {
     size_t pagesize = 2 * 1024 * 1024;
     size = (size + pagesize - 1) / pagesize * pagesize;
     munmap(ptr, size);
 }
+
 void freedmatrix(void *ptr, int m, int n, int lda)
 {
     hugefree(ptr, sizeof(double) * lda * n);
 }
+
 double flush_cache(double t)
 {
     int n = 20000000;
@@ -54,6 +58,7 @@ double flush_cache(double t)
     free(a);
     return x;
 }
+
 double *dmatrix(int m, int n, int lda)
 {
     assert(m > 0 && n > 0);
@@ -63,6 +68,7 @@ double *dmatrix(int m, int n, int lda)
     double *ret = (double *)hugealloc(sizeof(double) * lda * n);
     return ret;
 }
+
 void drandomM(int m, int n, double *a, int lda)
 {
     for (int j = 0; j < n; ++j)
@@ -74,6 +80,7 @@ void drandomM(int m, int n, double *a, int lda)
         }
     }
 }
+
 void drandomG(int m, int n, double *a, int ldg)
 {
     for (int j = 0; j < n; ++j)
@@ -87,7 +94,8 @@ void drandomG(int m, int n, double *a, int ldg)
         }
     }
 }
-void applywavemx2_avx(int m, double gamma, double sigma, double *x, double *y)
+
+void applymx2_avx(int m, double gamma, double sigma, double *x, double *y)
 {
     double *restrict xp = x;
     double *restrict yp = y;
@@ -123,17 +131,52 @@ void applywavemx2_avx(int m, double gamma, double sigma, double *x, double *y)
     }
 }
 
+void applymx2(int m, double gamma, double sigma, double *x, double *y)
+{
+    // applying a single Givens rotation
+    double *restrict xp = x;
+    double *restrict yp = y;
+    double tmp = 0.0;
+    if (gamma == 1.0)
+    {
+        return;
+    }
+    for (int i = 0; i < m; i++)
+    {
+        tmp = *xp;
+        *xp = gamma * tmp + sigma * (*yp);
+        *yp = gamma * (*yp) - sigma * tmp;
+        xp += 1;
+        yp += 1;
+    }
+}
+
 void applysingle_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg)
 {
-    for (int h = 0; h < k; h++)
+    for (int h = 0; h < n - 1; h++)
     {
-        for (int j = 0; j < n - 1; j++)
+        for (int j = 0; j < k; j++)
+        {
+            double gamma = g[2 * j + h * ldg];
+            double sigma = g[2 * j + h * ldg + 1];
+            double *V = &v[j * ldg];
+            double *V1 = &v[(j + 1) * ldg];
+            applywavemx2_avx(m, gamma, sigma, V, V1);
+        }
+    }
+}
+
+void applysingle_reg(int k, int m, int n, double *g, double *v, int ldv, int ldg)
+{
+    for (int j = 0; j < k; j++)
+    {
+        for (int h = 0; h < n - 1; h++)
         {
             double gamma = g[2 * h + j * ldg];
             double sigma = g[2 * h + j * ldg + 1];
-            double *V = v + j * ldv;
-            double *V1 = v + (j + 1) * ldv;
-            applywavemx2_avx(m, gamma, sigma, V, V1);
+            double *V = &v[h*ldv];
+            double *V1 = &v[(h+1)*ldv];
+            applymx2(m, gamma, sigma, V, V1);
         }
     }
 }
@@ -155,7 +198,6 @@ void applywave_fusing_auto(int k, int m, int n, double *G, double *V, int ldv, i
                 // (g,i) starting point
 
                 {
-                    // applywavemx2_avx_4x3(m, V, G, ldv, ldg, g, i);
                     applywavemx2_avx_auto(m, V, G, ldv, ldg, g, i);
                 }
             }
@@ -178,7 +220,7 @@ void applywave_fusing_auto(int k, int m, int n, double *G, double *V, int ldv, i
                         double sigma = G[2 * ii + gg * ldg + 1];
                         double *v = &V[gg * ldv];
                         double *v1 = &V[(gg + 1) * ldv];
-                        applywavemx2_avx(m, gamma, sigma, v, v1);
+                        applymx2_avx(m, gamma, sigma, v, v1);
                         // printf("%d,%d\n",gg,ii);
                     }
                 }
@@ -210,6 +252,7 @@ void dmatrix_vector_multiply_mt_auto(int k, int m, int n, double *g, double *v, 
         }
     }
 }
+
 void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg)
 {
 #pragma omp parallel
@@ -234,6 +277,8 @@ void dmatrix_vector_multiply_mt_avx(int k, int m, int n, double *g, double *v, i
     }
 }
 
+
+
 double *copyMatrix(double *v, int m, int n, int ldv)
 {
     double *tmp = (double *)malloc(sizeof(double) * ldv * n);
@@ -246,22 +291,24 @@ double *copyMatrix(double *v, int m, int n, int ldv)
     }
     return tmp;
 }
+
 int Check(double *v, double *vc, int m, int n, int ldv)
 {
-    for (int j = 0; j < n; j++)
+    for (int j = 0; j < m; j++)
     {
-        for (int i = 0; i < m; i++)
+        for (int i = 0; i < n; i++)
         {
             // if ((v[i + j * ldv] != vc[i + j * ldv]) > EPSILON)
             if (fabs(v[i + j * ldv] - vc[i + j * ldv]) > 1e-10)
             {
-                // printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
-                return 0;
+                printf("%3d %3d %f %f\n", i, j, v[i + j * ldv], vc[i + j * ldv]);
+                // return 0;
             }
         }
     }
     return 1;
 }
+
 int main(int argc, char const *argv[])
 {
     /* code */
@@ -271,6 +318,7 @@ int main(int argc, char const *argv[])
     int k = atoi(argv[2]);
     int mx = atoi(argv[3]);
     int my = atoi(argv[4]);
+
     int ldv = m;     // >= m
     int ldg = 2 * k; // >= k
     if ((ldv % (4096 / 8)) == 0)
@@ -286,22 +334,23 @@ int main(int argc, char const *argv[])
     drandomM(m, n, v, ldv);
     drandomG(k, n - 1, g, ldg);
     cv = copyMatrix(v, m, n, ldv);
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
 
-        
+       
         double x = flush_cache(i64time() * 1e-9);
         long long int t1 = i64time();
         /*fusing*/
+        // dmatrix_vector_multiply_mt_reg(k, m, n, g, v, ldv, ldg);
         dmatrix_vector_multiply_mt_auto(k, m, n, g, v, ldv, ldg, mx, my);
         long long int t2 = i64time();
 
-        // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // printf("%d\n", Check(v, cv, m, n, ldv));
+        dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        printf("%d\n", Check(v, cv, m, n, ldv));
 
-        double time1 = (t2 - t1) * 1e-9;
-        double flop = 6.0 * m * (n - 1) * k;
-        printf("%dx%d %d %d %f %f %f\n",mx,my, n, k, (flop / time1) * 1e-9, time1, x);
+        // double time1 = (t2 - t1) * 1e-9;
+        // double flop = 6.0 * m * (n - 1) * k;
+        // printf("%dX%d %d %d %f %f %f\n", mx, my, n, k, (flop / time1) * 1e-9, time1, x);
     }
 
     freedmatrix(v, m, n, ldv);
@@ -309,6 +358,3 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-
-// gcc -O3  -march=native 15.c -fopenmp -lm -o 15
-// OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 ./15

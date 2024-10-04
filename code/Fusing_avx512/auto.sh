@@ -22,10 +22,10 @@ my=(
     "2"
     "3"
 )
-mxl=(4)
-myl=(3)
-nl=(64)
-kl=(192)
+mxl=(2 3 4)
+myl=(1 2 3)
+nl=(1000 2000 3000 4000 5000)
+kl=(96 192 384)
 rm -f result.txt
 
 # for x in "${mx[@]}"; do
@@ -40,14 +40,30 @@ rm -f result.txt
 #         done
 #     done
 # done
-rm -f ../data/result_fusing.txt
-for x in "${mxl[@]}"; do
-    for y in "${myl[@]}"; do 
+# rm -f ../data/result_fusing.txt
+# for x in "${mxl[@]}"; do
+#     for y in "${myl[@]}"; do 
+#         python3 Auto.py $x $y
+#         gcc -O3 -march=x86-64-v4 fusing.c function.c -fopenmp -lm -o fusing
+#         for n in "${nl[@]}"; do
+#             for k in "${kl[@]}"; do
+#                 OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./fusing ${n} ${k} ${x} ${y} >> ../data/result_fusing.txt
+#                 # sleep 1
+#             done
+#         done
+#     done
+# done
+
+mx3=(3)
+my4=(4)
+rm -f ../data/result_fusing_3x4.txt
+for x in "${mx3[@]}"; do
+    for y in "${my4[@]}"; do 
         python3 Auto.py $x $y
         gcc -O3 -march=x86-64-v4 fusing.c function.c -fopenmp -lm -o fusing
         for n in "${nl[@]}"; do
             for k in "${kl[@]}"; do
-                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./fusing ${n} ${k} ${x} ${y} >> ../data/result_fusing.txt
+                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./fusing ${n} ${k} ${x} ${y} >> ../data/result_fusing_3x4.txt
                 # sleep 1
             done
         done

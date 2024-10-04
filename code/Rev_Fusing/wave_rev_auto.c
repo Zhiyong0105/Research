@@ -160,11 +160,6 @@ void applysingle_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg
 }
 
 
-
-
-
-
-
 void Check_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
 {
     int count = 0;
