@@ -56,14 +56,14 @@ rm -f result.txt
 
 mx3=(3)
 my4=(4)
-rm -f ../data/result_fusing_3x4.txt
-for x in "${mx3[@]}"; do
-    for y in "${my4[@]}"; do 
+rm -f ../data/result_fusing_avx512.txt
+for x in "${mxl[@]}"; do
+    for y in "${myl[@]}"; do 
         python3 Auto.py $x $y
         gcc -O3 -march=x86-64-v4 fusing.c function.c -fopenmp -lm -o fusing
         for n in "${nl[@]}"; do
             for k in "${kl[@]}"; do
-                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./fusing ${n} ${k} ${x} ${y} >> ../data/result_fusing_3x4.txt
+                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./fusing ${n} ${k} ${x} ${y} >> ../data/result_fusing_avx512.txt
                 # sleep 1
             done
         done

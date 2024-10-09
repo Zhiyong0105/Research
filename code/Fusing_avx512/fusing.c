@@ -297,7 +297,7 @@ int main(int argc, char const *argv[])
         long long int t2 = i64time();
 
         // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // printf("%d\n", Check(v, cv, m, n, ldv));
+        // printf("%d %d %d %d\n",mx,my,n, Check(v, cv, m, n, ldv));
 
         double time1 = (t2 - t1) * 1e-9;
         double flop = 6.0 * m * (n - 1) * k;
