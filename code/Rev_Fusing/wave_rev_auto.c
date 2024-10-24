@@ -159,43 +159,41 @@ void applysingle_avx(int k, int m, int n, double *g, double *v, int ldv, int ldg
     }
 }
 
-
 void Check_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
 {
     int count = 0;
     for (int j = 0; j < n; j++)
     {
         for (int x = i; x < i + m; x++)
-       
 
-            {
-                printf("%f %f\n", V[x + j * ldv], V_seq[count]);
-                count++;
-            }
-            printf("\n");
+        {
+            printf("%f %f\n", V[x + j * ldv], V_seq[count]);
+            count++;
+        }
+        printf("\n");
     }
 }
 
-// void copy_seq_avx256(int m, int n, double *V, double *tmp, int ldv, int i)
-// {
-//     int count = 0;
-//     for (int y = 0; y < n; y++)
-//     {
-//         _mm_prefetch((const char *)&V[i + y * ldv], _MM_HINT_T0);
-//         for (int j = 0; j < m; j += 4)
-//         {
-//             __m256d data = _mm256_load_pd(&V[i + y * ldv + j]);
-//             _mm256_store_pd(&tmp[count + j], data);
-//         }
-//         count += m;
-//     }
-// }
+void copy_seq_avx256(int m, int n, double *V, double *tmp, int ldv, int i)
+{
+    int count = 0;
+    for (int y = 0; y < n; y++)
+    {
+        _mm_prefetch((const char *)&V[i + y * ldv], _MM_HINT_T0);
+        for (int j = 0; j < m; j += 4)
+        {
+            __m256d data = _mm256_load_pd(&V[i + y * ldv + j]);
+            _mm256_store_pd(&tmp[count + j], data);
+        }
+        count += m;
+    }
+}
 void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
 {
     int count = 0;
     for (int y = 0; y < n; y++)
     {
-        _mm_prefetch((const char*)&V[i + y * ldv], _MM_HINT_T0);  
+        _mm_prefetch((const char *)&V[i + y * ldv], _MM_HINT_T0);
         for (int j = 0; j < m; j += 8)
         {
             __m512d data = _mm512_load_pd(&V[i + y * ldv + j]);
@@ -205,27 +203,27 @@ void copy_seq(int m, int n, double *V, double *tmp, int ldv, int i)
     }
 }
 
-// void recover_seq_avx256(int m, int n, double *V, double *V_seq, int ldv, int i)
-// {
-//     int count = 0;
-//     for (int y = 0; y < n; y++)
-//     {
-//         _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
-//         for (int j = 0; j < m; j += 4)
-//         {
-//             __m256d data = _mm256_load_pd(&V_seq[count + j]);
-//             _mm256_store_pd(&V[i + y * ldv + j], data);
-//         }
-//         count += m;
-//     }
-// }
+void recover_seq_avx256(int m, int n, double *V, double *V_seq, int ldv, int i)
+{
+    int count = 0;
+    for (int y = 0; y < n; y++)
+    {
+        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
+        for (int j = 0; j < m; j += 4)
+        {
+            __m256d data = _mm256_load_pd(&V_seq[count + j]);
+            _mm256_store_pd(&V[i + y * ldv + j], data);
+        }
+        count += m;
+    }
+}
 void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
 {
     int count = 0;
     for (int y = 0; y < n; y++)
     {
-        _mm_prefetch((const char*)&V_seq[count], _MM_HINT_T0);   
-        for (int j = 0; j < m; j += 8) 
+        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
+        for (int j = 0; j < m; j += 8)
         {
             __m512d data = _mm512_load_pd(&V_seq[count + j]);
             _mm512_store_pd(&V[i + y * ldv + j], data);
@@ -234,64 +232,64 @@ void recover_seq(int m, int n, double *V, double *V_seq, int ldv, int i)
     }
 }
 
-// void creat_left_seq_avx256(int m, int n, double *V, double *V_left, int ldv, int i, int m_left)
-// {
-//     int count = 0;
-
-//     for (int y = 0; y < n; y++)
-//     {
-//         int base_index = y * ldv + i;
-//         _mm_prefetch((const char *)&V[base_index], _MM_HINT_T0);
-//         for (int j = 0; j < m_left; j += 4)
-//         {
-//             __m256d data = _mm256_load_pd(&V[base_index + j]);
-//             _mm256_store_pd(&V_left[count + j], data);
-//         }
-//         memset(&V_left[count + m_left], 0, (m - m_left) * sizeof(double));
-//         count += m;
-//     }
-// }
-void creat_left_seq(int m, int n, double *V, double *V_left, int ldv, int i, int m_left)
+void creat_left_seq_avx256(int m, int n, double *V, double *V_left, int ldv, int i, int m_left)
 {
     int count = 0;
-    
+
     for (int y = 0; y < n; y++)
     {
         int base_index = y * ldv + i;
-        _mm_prefetch((const char*)&V[base_index], _MM_HINT_T0);  
-        for (int j = 0; j < m_left; j += 8) 
+        _mm_prefetch((const char *)&V[base_index], _MM_HINT_T0);
+        for (int j = 0; j < m_left; j += 4)
+        {
+            __m256d data = _mm256_load_pd(&V[base_index + j]);
+            _mm256_store_pd(&V_left[count + j], data);
+        }
+        memset(&V_left[count + m_left], 0, (m - m_left) * sizeof(double));
+        count += m;
+    }
+}
+void creat_left_seq(int m, int n, double *V, double *V_left, int ldv, int i, int m_left)
+{
+    int count = 0;
+
+    for (int y = 0; y < n; y++)
+    {
+        int base_index = y * ldv + i;
+        _mm_prefetch((const char *)&V[base_index], _MM_HINT_T0);
+        for (int j = 0; j < m_left; j += 8)
         {
             __m512d data = _mm512_load_pd(&V[base_index + j]);
             _mm512_store_pd(&V_left[count + j], data);
         }
-        memset(&V_left[count + m_left], 0, (m - m_left) * sizeof(double)); 
+        memset(&V_left[count + m_left], 0, (m - m_left) * sizeof(double));
         count += m;
     }
 }
 
-// void recover_seq_left_avx256(int m, int n, double *V, double *V_seq, int ldv, int i, int m_left)
-// {
-//     int count = 0;
-//     for (int y = 0; y < n; y++)
-//     {
-//         int base_index = y * ldv + i;
-//         _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
-//         for (int j = 0; j < m_left; j += 4)
-//         {
-//             __m256d data = _mm256_load_pd(&V_seq[count + j]);
-//             _mm256_store_pd(&V[base_index + j], data);
-//         }
-//         count += m;
-//     }
-// }
+void recover_seq_left_avx256(int m, int n, double *V, double *V_seq, int ldv, int i, int m_left)
+{
+    int count = 0;
+    for (int y = 0; y < n; y++)
+    {
+        int base_index = y * ldv + i;
+        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
+        for (int j = 0; j < m_left; j += 4)
+        {
+            __m256d data = _mm256_load_pd(&V_seq[count + j]);
+            _mm256_store_pd(&V[base_index + j], data);
+        }
+        count += m;
+    }
+}
 void recover_seq_left(int m, int n, double *V, double *V_seq, int ldv, int i, int m_left)
 {
     int count = 0;
     for (int y = 0; y < n; y++)
     {
         int base_index = y * ldv + i;
-        _mm_prefetch((const char*)&V_seq[count], _MM_HINT_T0);    
-        for (int j = 0; j < m_left; j += 8) 
+        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
+        for (int j = 0; j < m_left; j += 8)
         {
             __m512d data = _mm512_load_pd(&V_seq[count + j]);
             _mm512_store_pd(&V[base_index + j], data);
@@ -299,7 +297,6 @@ void recover_seq_left(int m, int n, double *V, double *V_seq, int ldv, int i, in
         count += m;
     }
 }
-
 
 void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
 {
@@ -314,7 +311,7 @@ void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
         copy_seq(mv * 8, n, V, v_seq, ldv, i);
         for (int k = 0; k < K; k += my)
         {
-            _mm_prefetch((const char*)&G[k * ldg], _MM_HINT_T0);  
+            _mm_prefetch((const char *)&G[k * ldg], _MM_HINT_T0);
             apply_rev_avx_mv_seq(k, m, n, G, v_seq, ldg);
         }
         recover_seq(mv * 8, n, V, v_seq, ldv, i);
@@ -326,14 +323,14 @@ void apply_rev_avx512_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
         creat_left_seq(mv * 8, n, V, v_seq_left, ldv, M, m_left);
         for (int k = 0; k < K; k += my)
         {
-            _mm_prefetch((const char*)&G[k * ldg], _MM_HINT_T0);  
+            _mm_prefetch((const char *)&G[k * ldg], _MM_HINT_T0);
             apply_rev_avx_mv_seq(k, m, n, G, v_seq_left, ldg);
         }
         recover_seq_left(mv * 8, n, V, v_seq_left, ldv, M, m_left);
     }
     _mm_free(v_seq_left);
 }
-void apply_rev_avx512_auto_mv_seq_ALL_avx256(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
+void apply_rev_avx256_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V, int ldv, int ldg, int my, int mv)
 {
     int m_iter = m / (mv * 4);
     int m_left = m % (mv * 4);
@@ -343,54 +340,65 @@ void apply_rev_avx512_auto_mv_seq_ALL_avx256(int K, int m, int n, double *G, dou
 
     for (int i = 0; i < M; i += (mv * 4))
     {
-        copy_seq(mv * 4, n, V, v_seq, ldv, i);
+        copy_seq_avx256(mv * 4, n, V, v_seq, ldv, i);
         for (int k = 0; k < K; k += my)
         {
             _mm_prefetch((const char *)&G[k * ldg], _MM_HINT_T0);
             apply_rev_avx_mv_seq_avx256(k, m, n, G, v_seq, ldg);
         }
-        recover_seq(mv * 4, n, V, v_seq, ldv, i);
+        recover_seq_avx256(mv * 4, n, V, v_seq, ldv, i);
     }
     _mm_free(v_seq);
 
     if (m_left != 0)
     {
-        creat_left_seq(mv * 4, n, V, v_seq_left, ldv, M, m_left);
+        creat_left_seq_avx256(mv * 4, n, V, v_seq_left, ldv, M, m_left);
         for (int k = 0; k < K; k += my)
         {
             _mm_prefetch((const char *)&G[k * ldg], _MM_HINT_T0);
             apply_rev_avx_mv_seq_avx256(k, m, n, G, v_seq_left, ldg);
         }
-        recover_seq_left(mv * 4, n, V, v_seq_left, ldv, M, m_left);
+        recover_seq_left_avx256(mv * 4, n, V, v_seq_left, ldv, M, m_left);
     }
     _mm_free(v_seq_left);
 }
 
-// void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
-// {
-//     #pragma omp parallel
-//     {
-        
-//         int nt = omp_get_num_threads();
-//         int id = omp_get_thread_num();
-        
-        
-//         int bm = (m + nt - 1) / nt;
-        
-        
-//         bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
+void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
+{
+#pragma omp parallel
+    {
 
-        
-//         int mbegin = bm * id < m ? bm * id : m;
-//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
 
-//         apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+        int bm = (m + nt - 1) / nt;
 
+        bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
 
-        
+        int mbegin = bm * id < m ? bm * id : m;
+        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
 
-//     }
-// }
+        apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+    }
+}
+void dmatrix_vector_multiply_mt_rev_avx256_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
+{
+#pragma omp parallel
+    {
+
+        int nt = omp_get_num_threads();
+        int id = omp_get_thread_num();
+
+        int bm = (m + nt - 1) / nt;
+
+        bm = (bm + mv * 4 - 1) / (mv * 4) * (mv * 4);
+
+        int mbegin = bm * id < m ? bm * id : m;
+        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+
+        apply_rev_avx256_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+    }
+}
 // void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
 // {
 // #pragma omp parallel for schedule(dynamic)
@@ -408,22 +416,22 @@ void apply_rev_avx512_auto_mv_seq_ALL_avx256(int K, int m, int n, double *G, dou
 //     }
 // }
 
-void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
-{
-#pragma omp parallel for schedule(dynamic)
-    for (int id = 0; id < omp_get_max_threads(); ++id)
-    {
-        int nt = omp_get_num_threads();
+// void dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(int k, int m, int n, double *g, double *v, int ldv, int ldg, int my, int mv)
+// {
+// #pragma omp parallel for schedule(dynamic)
+//     for (int id = 0; id < omp_get_max_threads(); ++id)
+//     {
+//         int nt = omp_get_num_threads();
 
-        int bm = (m + nt - 1) / nt;
-        bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
+//         int bm = (m + nt - 1) / nt;
+//         bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
 
-        int mbegin = bm * id < m ? bm * id : m;
-        int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
+//         int mbegin = bm * id < m ? bm * id : m;
+//         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
 
-        apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
-    }
-}
+//         apply_rev_avx512_auto_mv_seq_ALL(k, mend - mbegin, n, g, v + mbegin, ldv, ldg, my, mv);
+//     }
+// }
 
 void applywave_avx(int k, int m, int n, double *G, double *V, int ldv, int ldg)
 {
@@ -570,17 +578,17 @@ int main(int argc, char const *argv[])
         // dmatrix_vector_multiply_mt_rev_avx(k, m, n, g, v, ldv, ldg, my, mv);
         // dmatrix_vector_multiply_mt_rev_avx_seq(k, m, n, g, v, ldv, ldg, my, mv);
         dmatrix_vector_multiply_mt_rev_avx512_seq_ALL(k, m, n, g, v, ldv, ldg, my, mv);
+        // dmatrix_vector_multiply_mt_rev_avx256_seq_ALL(k, m, n, g, v, ldv, ldg, my, mv);
         long long int t2 = i64time();
 
-        // dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
-        // // applysingle_avx(k, m, n, g, v, ldv, ldg);
-        // printf("%d %d %d %d\n", my, mv, n, Check(v, cv, m, n, ldv));
+        dmatrix_vector_multiply_mt_avx(k, m, n, g, cv, ldv, ldg);
+        // applysingle_avx(k, m, n, g, v, ldv, ldg);
+        printf("%d %d %d %d\n", my, mv, n, Check(v, cv, m, n, ldv));
 
-        double time1 = (t2 - t1) * 1e-9;
-        double flop = 6.0 * m * (n - 1) * k;
-        printf("%dX%d %d %d %f %f %f\n", my, mv, n, k, (flop / time1) * 1e-9, time1, x);
+        // double time1 = (t2 - t1) * 1e-9;
+        // double flop = 6.0 * m * (n - 1) * k;
+        // printf("%dX%d %d %d %f %f %f\n", my, mv, n, k, (flop / time1) * 1e-9, time1, x);
     }
-
 
     freedmatrix(v, m, n, ldv);
     freedmatrix(g, 2 * (n - 1), k, ldg);

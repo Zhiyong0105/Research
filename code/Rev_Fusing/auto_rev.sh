@@ -97,8 +97,8 @@ n_3_6=(1152 1536 2304 2688 3072 3840 4608)
 #     y="${my_3[i]}"
 #     x="${my_3[i+1]}"
 #     python3 auto_avx512.py "$y" "$x"
-#     gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
-#     #   gcc-13 -O3 -march=znver4  wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
+#     # gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+#       gcc-13 -O3 -march=znver4  wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
 #     for n in "${n_my_3_fusing[@]}"; do
 #         for k in "${ks[@]}"; do
 #                 # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
@@ -108,19 +108,53 @@ n_3_6=(1152 1536 2304 2688 3072 3840 4608)
 #         done
 # done
 
-rm -f result_avx512_my_3.txt
+# rm -f result_avx512_my_3.txt
+# for ((i=0;i<14;i+=2));do
+#     y="${three_mv[i]}"
+#     x="${three_mv[i+1]}"
+#     python3 auto_avx512.py "$y" "$x"
+#     # gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+#     gcc-13 -O3 -march=znver4   wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
+
+#     for n in "${nd[@]}"; do
+#         for k in "${ks[@]}"; do
+#                 # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
+#                 # OMP_PROC_BIND=close OMP_PLACES=cores 
+#                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" >> result_avx512_my_3.txt
+#                 done
+#         done
+# done
+
+
+# rm -f result_avx256_my_3_amd.txt
+# for ((i=0;i<14;i+=2));do
+#     y="${three_mv[i]}"
+#     x="${three_mv[i+1]}"
+#     python3 auto_avx512.py "$y" "$x"
+#     # gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+#     gcc-13 -O3 -march=znver4   wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
+
+#     for n in "${nd[@]}"; do
+#         for k in "${ks[@]}"; do
+#                 # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
+#                 # OMP_PROC_BIND=close OMP_PLACES=cores 
+#                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" >> result_avx256_my_3_amd.txt
+#                 done
+#         done
+# done
+rm -f result_avx512_my_3_lowGHz.txt
 for ((i=0;i<14;i+=2));do
     y="${three_mv[i]}"
     x="${three_mv[i+1]}"
     python3 auto_avx512.py "$y" "$x"
-    gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
-    #   gcc-13 -O3 -march=znver4   wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
+    # gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+    gcc-13 -O3 -march=znver4   wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
 
     for n in "${nd[@]}"; do
         for k in "${ks[@]}"; do
                 # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
                 # OMP_PROC_BIND=close OMP_PLACES=cores 
-               OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" >> result_avx512_my_3.txt
+               OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" >> result_avx512_my_3_lowGHz.txt
                 done
         done
 done
