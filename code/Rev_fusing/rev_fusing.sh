@@ -111,30 +111,52 @@ n_200=($(seq 1000 200 5000))
 #         done
 # done
 
-# sudo sh -c 'echo 1 > /proc/sys/kernel/perf_event_paranoid'
 
 rm -f ../data/result_rev_fusing_avx256_intel.txt
 rm -f ../data/result_analysis_avx256_intel.txt
 
+# for ((i=0; i<10; i+=2)); do
+#     y="${myxmv_256[i]}"
+#     x="${myxmv_256[i+1]}"
+#     python3 rev_fusing.py "$y" "$x"
+    
+    
+#     gcc -O3 -march=native rev_fusing.c -o rev_fusing apply_rev_avx.c -fopenmp -lm
+
+    
+#     for n in "${nd[@]}"; do
+#         for k in "${ks[@]}"; do
+           
+#             OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores \
+#            sudo perf stat -M TopdownL1 -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
+            
+            
+#             echo "n=${n}, k=${k}, my=${y}, mv=${x}" >> ../data/result_analysis_avx256_intel.txt
+#             cat perf_output.txt >> ../data/result_analysis_avx256_intel.txt
+#             rm -f perf_output.txt  
+#         done
+#     done
+# done
 for ((i=0; i<10; i+=2)); do
     y="${myxmv_256[i]}"
     x="${myxmv_256[i+1]}"
     python3 rev_fusing.py "$y" "$x"
-    
-    # 编译 rev_fusing 程序
     gcc -O3 -march=native rev_fusing.c -o rev_fusing apply_rev_avx.c -fopenmp -lm
 
-    # 遍历 nd 和 ks 数组中的 n 和 k
     for n in "${nd[@]}"; do
         for k in "${ks[@]}"; do
             # 设置 OpenMP 环境变量并执行 perf 统计，结果写入临时文件 perf_output.txt
             OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 \
-           sudo perf stat -M TopdownL1 -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
+            sudo perf stat -M TopdownL1 -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
             
-            # 将当前 n, k, y, x 参数组合和 perf 统计结果追加到 result_analysis_avx256_intel.txt
-            echo "n=${n}, k=${k}, y=${y}, x=${x}" >> ../data/result_analysis_avx256_intel.txt
-            cat perf_output.txt >> ../data/result_analysis_avx256_intel.txt
-            rm -f perf_output.txt  # 清除临时文件
+            # 提取第一行的 tma_backend_bound 数据
+            tma_backend_bound=$(grep "tma_backend_bound" perf_output.txt | head -n 1 | awk '{print $4}')
+
+            # 将当前 n, k, y, x 参数组合和 tma_backend_bound 结果追加到 result_analysis_avx256_intel.txt
+            echo "n=${n}, k=${k}, y=${y}, x=${x}, tma_backend_bound=${tma_backend_bound}%" >> ../data/result_analysis_avx256_intel.txt
+
+            # 清除临时文件
+            rm -f perf_output.txt
         done
     done
 done
