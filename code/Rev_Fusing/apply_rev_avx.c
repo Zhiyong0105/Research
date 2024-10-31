@@ -194,3 +194,66 @@ _mm512_storeu_pd(&V[8 * (n - 3)], v00);
 _mm512_storeu_pd(&V[8 * (n - 2)], v10);
 _mm512_storeu_pd(&V[8 * (n - 1)], v20);
 }
+void apply_rev_avx_mv_seq_fma(int k,int m, int n, double *G, double *V,int ldg)
+{
+__m512d  v00,  v10,  v20,  v30, gamma, sigma, tmp;
+v00 = _mm512_loadu_pd(&V[0 + 0]);
+v10 = _mm512_loadu_pd(&V[8 + 0]);
+v20 = _mm512_loadu_pd(&V[16 + 0]);
+    gamma = _mm512_set1_pd(G[2 * 0 + k * ldg]);
+    sigma = _mm512_set1_pd(G[2 * 0 + k * ldg + 1]);
+ tmp = v00;
+ v00 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v10));
+ v10 = _mm512_fmsub_pd(gamma, v10, _mm512_mul_pd(sigma, tmp));
+    gamma = _mm512_set1_pd(G[2 * 1  + k * ldg]);
+    sigma = _mm512_set1_pd(G[2 * 1  + k * ldg + 1]);
+ tmp = v10;
+ v10 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v20));
+ v20 = _mm512_fmsub_pd(gamma, v20, _mm512_mul_pd(sigma, tmp));
+    gamma = _mm512_set1_pd(G[2 * 0 + (k + 1) * ldg ]);
+    sigma = _mm512_set1_pd(G[2 * 0 + (k + 1) * ldg  + 1]);
+ tmp = v00;
+ v00 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v10));
+ v10 = _mm512_fmsub_pd(gamma, v10, _mm512_mul_pd(sigma, tmp));
+for (int g = 2; g < n - 1; g++)
+{
+v30 = _mm512_loadu_pd(&V[(g + 1) * 8 + 0]);
+gamma = _mm512_set1_pd(G[2 * g + k * ldg]);
+sigma = _mm512_set1_pd(G[2 * g + k * ldg + 1]);
+tmp = v20;
+ v20 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v30));
+ v30 = _mm512_fmsub_pd(gamma, v30, _mm512_mul_pd(sigma, tmp));
+gamma = _mm512_set1_pd(G[2 * (g - 1) + (k + 1) * ldg]);
+sigma = _mm512_set1_pd(G[2 * (g - 1) + (k + 1) * ldg + 1]);
+tmp = v10;
+ v10 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v20));
+ v20 = _mm512_fmsub_pd(gamma, v20, _mm512_mul_pd(sigma, tmp));
+gamma = _mm512_set1_pd(G[2 * (g - 2) + (k + 2) * ldg]);
+sigma = _mm512_set1_pd(G[2 * (g - 2) + (k + 2) * ldg + 1]);
+tmp = v00;
+ v00 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v10));
+ v10 = _mm512_fmsub_pd(gamma, v10, _mm512_mul_pd(sigma, tmp));
+_mm512_storeu_pd(&V[8 * (g - 2)], v00);
+v00=v10;
+v10=v20;
+v20=v30;
+}
+gamma = _mm512_set1_pd(G[2 * (n - 2) + (k + 1) * ldg]);
+sigma = _mm512_set1_pd(G[2 * (n - 2) + (k + 1) * ldg + 1]);
+tmp = v10;
+ v10 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v20));
+ v20 = _mm512_fmsub_pd(gamma, v20, _mm512_mul_pd(sigma, tmp));
+gamma = _mm512_set1_pd(G[2 * (n - 3) + (k + 2) * ldg]);
+sigma = _mm512_set1_pd(G[2 * (n - 3) + (k + 2) * ldg + 1]);
+tmp = v00;
+ v00 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v10));
+ v10 = _mm512_fmsub_pd(gamma, v10, _mm512_mul_pd(sigma, tmp));
+gamma = _mm512_set1_pd(G[2 * (n - 2) + (k + 2) * ldg]);
+sigma = _mm512_set1_pd(G[2 * (n - 2) + (k + 2) * ldg + 1]);
+tmp = v10;
+ v10 = _mm512_fmadd_pd(gamma, tmp, _mm512_mul_pd(sigma, v20));
+ v20 = _mm512_fmsub_pd(gamma, v20, _mm512_mul_pd(sigma, tmp));
+_mm512_storeu_pd(&V[8 * (n - 3)], v00);
+_mm512_storeu_pd(&V[8 * (n - 2)], v10);
+_mm512_storeu_pd(&V[8 * (n - 1)], v20);
+}

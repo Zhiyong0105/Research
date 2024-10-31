@@ -8,5 +8,6 @@ void apply_rev_avx512_mv();
 void apply_rev_avx_mv_seq();
 void apply_rev_avx512_mv_seq();
 void apply_rev_avx_mv_seq_avx256();
+void apply_rev_avx_mv_seq_fma();
 
 #endif
