@@ -19,6 +19,8 @@ three_6=(3 6)
 n_3_6=(1152 1536 2304 2688 3072 3840 4608)
 
 myxmv_256=(2 3 2 4 3 2 3 3 4 2)
+n_200=($(seq 1000 200 5000))
+
 
 
 # rm -f result.txt
@@ -94,19 +96,47 @@ myxmv_256=(2 3 2 4 3 2 3 3 4 2)
 #         done
 # done
 
-rm -f ../data/result_rev_fusing_avx256.txt
-for ((i=0;i<10;i+=2));do
+# rm -f ../data/result_rev_fusing_avx256_intel.txt
+# for ((i=0;i<10;i+=2));do
+#     y="${myxmv_256[i]}"
+#     x="${myxmv_256[i+1]}"
+#     python3 rev_fusing.py "$y" "$x"
+#     gcc -O3 -march=native rev_fusing.c -o rev_fusing apply_rev_avx.c -fopenmp -lm
+#     for n in "${nd[@]}"; do
+#         for k in "${ks[@]}"; do
+#                 # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
+#                 # OMP_PROC_BIND=close OMP_PLACES=cores 
+#                OMP_NUM_THREADS=8 OMP_PLACES=0:8:2  ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
+#                 done
+#         done
+# done
+
+# sudo sh -c 'echo 1 > /proc/sys/kernel/perf_event_paranoid'
+
+rm -f ../data/result_rev_fusing_avx256_intel.txt
+rm -f ../data/result_analysis_avx256_intel.txt
+
+for ((i=0; i<10; i+=2)); do
     y="${myxmv_256[i]}"
     x="${myxmv_256[i+1]}"
     python3 rev_fusing.py "$y" "$x"
+    
+    # 编译 rev_fusing 程序
     gcc -O3 -march=native rev_fusing.c -o rev_fusing apply_rev_avx.c -fopenmp -lm
-    for n in "${n_my_3_fusing[@]}"; do
+
+    # 遍历 nd 和 ks 数组中的 n 和 k
+    for n in "${nd[@]}"; do
         for k in "${ks[@]}"; do
-                # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
-                # OMP_PROC_BIND=close OMP_PLACES=cores 
-               OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256.txt
-                done
+            # 设置 OpenMP 环境变量并执行 perf 统计，结果写入临时文件 perf_output.txt
+            OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 \
+           sudo perf stat -M TopdownL1 -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
+            
+            # 将当前 n, k, y, x 参数组合和 perf 统计结果追加到 result_analysis_avx256_intel.txt
+            echo "n=${n}, k=${k}, y=${y}, x=${x}" >> ../data/result_analysis_avx256_intel.txt
+            cat perf_output.txt >> ../data/result_analysis_avx256_intel.txt
+            rm -f perf_output.txt  # 清除临时文件
         done
+    done
 done
 
 # rm -f result_avx512_my_3.txt

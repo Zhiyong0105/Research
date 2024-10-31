@@ -286,7 +286,7 @@ void dmatrix_vector_multiply_mt_rev_avx256_seq_ALL(int k, int m, int n, double *
 
         int bm = (m + nt - 1) / nt;
 
-        bm = (bm + mv * 8 - 1) / (mv * 8) * (mv * 8);
+        bm = (bm + mv * 4 - 1) / (mv * 4) * (mv * 4);
 
         int mbegin = bm * id < m ? bm * id : m;
         int mend = bm * (id + 1) < m ? bm * (id + 1) : m;
@@ -378,7 +378,7 @@ int main(int argc, char const *argv[])
     cv = copyMatrix(v, m, n, ldv);
     // printf("%p¥n", cv); fflush(stdout);
     // ldv
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
 
         double x = flush_cache(i64time() * 1e-9);

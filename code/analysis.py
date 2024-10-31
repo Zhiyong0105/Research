@@ -18,6 +18,8 @@ data_fusing_avx512_znver4_mv_3 = pd.read_csv("data/result_avx512_znver4_mv_3.txt
 data_fusing_avx256 = pd.read_csv("data/result_rev_fusing_avx256.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
 data_fusing_avx256_my_3_amd = pd.read_csv("data/result_avx256_my_3_amd.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
 data_fusing_avx512_my_3_lowGHz = pd.read_csv("data/result_avx512_my_3_lowGHz.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
+data_fusing_avx512_fma_my_3 = pd.read_csv("data/result_avx512_fma_my_3.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
+data_fusing_av256_intel= pd.read_csv("data/result_rev_fusing_avx256_intel.txt", sep=" ", header=None, names=["name","n","k","gflops","time","useless"])
 
 Groupmean_data_mean= data.groupby(["name","n","k"]).mean()
 Groupmean_data_mean = Groupmean_data_mean.reset_index()
@@ -67,6 +69,13 @@ Groupmean_data_fusing_avx256_my_3_amd_mean = Groupmean_data_fusing_avx256_my_3_a
 Groupmean_data_fusing_avx512_my_3_lowGHz_mean = data_fusing_avx512_my_3_lowGHz.groupby(["name","n","k"]).mean()
 Groupmean_data_fusing_avx512_my_3_lowGHz_mean = Groupmean_data_fusing_avx512_my_3_lowGHz_mean.reset_index()
 
+
+Groupmean_data_fusing_avx512_fma_my_3_mean = data_fusing_avx512_fma_my_3.groupby(["name","n","k"]).mean()
+Groupmean_data_fusing_avx512_fma_my_3_mean = Groupmean_data_fusing_avx512_fma_my_3_mean.reset_index()
+
+Groupmean_data_fusing_av256_intel_mean = data_fusing_av256_intel.groupby(["name","n","k"]).mean()
+Groupmean_data_fusing_av256_intel_mean = Groupmean_data_fusing_av256_intel_mean.reset_index()
+
 theoretical_performance = 201
 Groupmean_data_rev_mean['gflops_percentage'] = (Groupmean_data_rev_mean['gflops'] / theoretical_performance) * 100
 
@@ -109,76 +118,155 @@ k_rev_fusing_avx256 = set(k_rev_fusing_avx256)
 k_rev_fusing_avx256_my_3_amd = Groupmean_data_fusing_avx256_my_3_amd_mean['k'].unique()
 k_rev_fusing_avx256_my_3_amd = set(k_rev_fusing_avx256_my_3_amd)
 
-for k in k_rev_fusing_avx256_my_3_amd:
-    plt.figure(figsize=(8, 6))
-    for name in Groupmean_data_fusing_avx256_my_3_amd_mean["name"].unique():
-        sub = Groupmean_data_fusing_avx256_my_3_amd_mean[(Groupmean_data_fusing_avx256_my_3_amd_mean["name"] == name) & (Groupmean_data_fusing_avx256_my_3_amd_mean['k'] == k)]
-        if not sub.empty:
-            if name == '4x3':
-                plt.plot(sub['n'], sub['gflops_percentage'], label=name, color='red', linestyle='-', marker='o')
-            else:
-                plt.plot(sub['n'], sub['gflops_percentage'], label=name, linestyle='-', marker='o')
-    plt.legend()
-    plt.xlabel('n')
-    plt.ylabel('gflops(%)')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("picture/G_rev_fusing_avx256_my_3_amd_per_{}.png".format(k))
-    plt.close()
+k_rev_fusing_avx512_fma_my_3 = Groupmean_data_fusing_avx512_fma_my_3_mean['k'].unique()
+k_rev_fusing_avx512_fma_my_3 = set(k_rev_fusing_avx512_fma_my_3)
 
-for k in k_rev_fusing_avx256_my_3_amd:
-    plt.figure(figsize=(8, 6))
-    for name in Groupmean_data_fusing_avx256_my_3_amd_mean["name"].unique():
-        sub = Groupmean_data_fusing_avx256_my_3_amd_mean[(Groupmean_data_fusing_avx256_my_3_amd_mean["name"] == name) & (Groupmean_data_fusing_avx256_my_3_amd_mean['k'] == k)]
+k_rev_fusig_avx256_intel = Groupmean_data_fusing_av256_intel_mean['k'].unique()
+k_rev_fusig_avx256_intel = set(k_rev_fusig_avx256_intel)
+
+linestyles = ['-', '--', '-.', ':']
+colors = ['blue', 'orange', 'green', 'purple']
+
+for k in k_rev_fusig_avx256_intel:
+    plt.figure(figsize=(12, 8))
+    
+    
+    for i, name in enumerate(Groupmean_data_fusing_av256_intel_mean["name"].unique()):
+        sub = Groupmean_data_fusing_av256_intel_mean[
+            (Groupmean_data_fusing_av256_intel_mean["name"] == name) & 
+            (Groupmean_data_fusing_av256_intel_mean['k'] == k)
+        ]
         if not sub.empty:
-            if name == '4x3':
-                plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='-', marker='o')
-            else:
-                plt.plot(sub['n'], sub['gflops'], label=name, linestyle='-', marker='o')
-    plt.legend()
+            linestyle = linestyles[i % len(linestyles)]
+            color = colors[i % len(colors)]
+            plt.plot(sub['n'], sub['gflops'], label=name, linestyle=linestyle, color=color, marker='o', markersize=3, alpha=0.8)
+    
+    plt.legend(loc='upper left', ncol=2, fontsize='small')
     plt.xlabel('n')
     plt.ylabel('gflops')
-    plt.grid(True)
+    plt.grid(which='both', linestyle='--', linewidth=0.5)
+    plt.xticks(range(1000, 5001, 1000))
+    # plt.ylim(150, 290)
     plt.tight_layout()
-    plt.savefig("picture/G_rev_fusing_avx256_my_3_amd_{}.png".format(k))
+    
+    plt.savefig(f"picture/G_rev_fusing_avx256_intel_{k}.png", dpi=300)
     plt.close()
+
+
+# for k in k_rev_fusing_avx512_fma_my_3:
+#     plt.figure(figsize=(8, 6))
+#     for name in Groupmean_data_fusing_avx512_fma_my_3_mean["name"].unique():
+#         sub = Groupmean_data_fusing_avx512_fma_my_3_mean[(Groupmean_data_fusing_avx512_fma_my_3_mean["name"] == name) & (Groupmean_data_fusing_avx512_fma_my_3_mean['k'] == k)]
+#         if not sub.empty:
+#             if name == '4x3':
+#                 plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='--', marker='o')
+#             else:
+#                 plt.plot(sub['n'], sub['gflops'], label=name, linestyle='--', marker='o')
+#     plt.legend()
+#     plt.xlabel('n')
+#     plt.ylabel('gflops')
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig("picture/G_rev_fusing_avx512_fma_my_3_amd_{}.png".format(k))
+#     plt.close()
+
+selected_names = ['3X1', '3X2', '3X3', '3X6']
+
+
+# for k in k_rev_fusing_avx512_fma_my_3:
+#     plt.figure(figsize=(12, 8))
+#     for i, name in enumerate(selected_names):
+#         sub = Groupmean_data_fusing_avx512_fma_my_3_mean[
+#             (Groupmean_data_fusing_avx512_fma_my_3_mean["name"] == name) & 
+#             (Groupmean_data_fusing_avx512_fma_my_3_mean['k'] == k)
+#         ]
+#         if not sub.empty:
+#             linestyle = linestyles[i % len(linestyles)]
+#             color = colors[i % len(colors)]
+#             plt.plot(sub['n'], sub['gflops'], label=name, linestyle=linestyle, color=color, marker='o', markersize=3, alpha=0.8)
+    
+#     plt.legend(loc='upper left', ncol=2, fontsize='small')
+#     plt.xlabel('n')
+#     plt.ylabel('gflops')
+#     plt.grid(which='both', linestyle='--', linewidth=0.5)
+#     plt.xticks(range(1000, 5001, 1000))
+#     # plt.ylim(150, 290)
+#     plt.tight_layout()
+    
+#     plt.savefig(f"picture/G_rev_fusing_avx512_fma_my_3_amd_{k}.png", dpi=300)
+#     plt.close()
+
+
+# for k in k_rev_fusing_avx256_my_3_amd:
+#     plt.figure(figsize=(8, 6))
+#     for name in Groupmean_data_fusing_avx256_my_3_amd_mean["name"].unique():
+#         sub = Groupmean_data_fusing_avx256_my_3_amd_mean[(Groupmean_data_fusing_avx256_my_3_amd_mean["name"] == name) & (Groupmean_data_fusing_avx256_my_3_amd_mean['k'] == k)]
+#         if not sub.empty:
+#             if name == '4x3':
+#                 plt.plot(sub['n'], sub['gflops_percentage'], label=name, color='red', linestyle='-', marker='o')
+#             else:
+#                 plt.plot(sub['n'], sub['gflops_percentage'], label=name, linestyle='-', marker='o')
+#     plt.legend()
+#     plt.xlabel('n')
+#     plt.ylabel('gflops(%)')
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig("picture/G_rev_fusing_avx256_my_3_amd_per_{}.png".format(k))
+#     plt.close()
+
+# for k in k_rev_fusing_avx256_my_3_amd:
+#     plt.figure(figsize=(8, 6))
+#     for name in Groupmean_data_fusing_avx256_my_3_amd_mean["name"].unique():
+#         sub = Groupmean_data_fusing_avx256_my_3_amd_mean[(Groupmean_data_fusing_avx256_my_3_amd_mean["name"] == name) & (Groupmean_data_fusing_avx256_my_3_amd_mean['k'] == k)]
+#         if not sub.empty:
+#             if name == '4x3':
+#                 plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='-', marker='o')
+#             else:
+#                 plt.plot(sub['n'], sub['gflops'], label=name, linestyle='-', marker='o')
+#     plt.legend()
+#     plt.xlabel('n')
+#     plt.ylabel('gflops')
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig("picture/G_rev_fusing_avx256_my_3_amd_{}.png".format(k))
+#     plt.close()
     
 k_rev_fusing_avx512_my_3_lowGHz = Groupmean_data_fusing_avx512_my_3_lowGHz_mean['k'].unique()
 k_rev_fusing_avx512_my_3_lowGHz = set(k_rev_fusing_avx512_my_3_lowGHz)
 
-for k in k_rev_fusing_avx512_my_3_lowGHz:
-    plt.figure(figsize=(8, 6))
-    for name in Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"].unique():
-        sub = Groupmean_data_fusing_avx512_my_3_lowGHz_mean[(Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"] == name) & (Groupmean_data_fusing_avx512_my_3_lowGHz_mean['k'] == k)]
-        if not sub.empty:
-            if name == '4x3':
-                plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='-', marker='o')
-            else:
-                plt.plot(sub['n'], sub['gflops'], label=name, linestyle='-', marker='o')
-    plt.legend()
-    plt.xlabel('n')
-    plt.ylabel('gflops')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("picture/G_rev_fusing_avx512_my_3_lowGHz_{}.png".format(k))
-    plt.close()   
+# for k in k_rev_fusing_avx512_my_3_lowGHz:
+#     plt.figure(figsize=(8, 6))
+#     for name in Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"].unique():
+#         sub = Groupmean_data_fusing_avx512_my_3_lowGHz_mean[(Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"] == name) & (Groupmean_data_fusing_avx512_my_3_lowGHz_mean['k'] == k)]
+#         if not sub.empty:
+#             if name == '4x3':
+#                 plt.plot(sub['n'], sub['gflops'], label=name, color='red', linestyle='-', marker='o')
+#             else:
+#                 plt.plot(sub['n'], sub['gflops'], label=name, linestyle='-', marker='o')
+#     plt.legend()
+#     plt.xlabel('n')
+#     plt.ylabel('gflops')
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig("picture/G_rev_fusing_avx512_my_3_lowGHz_{}.png".format(k))
+#     plt.close()   
 
-for k in k_rev_fusing_avx512_my_3_lowGHz:
-    plt.figure(figsize=(8, 6))
-    for name in Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"].unique():
-        sub = Groupmean_data_fusing_avx512_my_3_lowGHz_mean[(Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"] == name) & (Groupmean_data_fusing_avx512_my_3_lowGHz_mean['k'] == k)]
-        if not sub.empty:
-            if name == '4x3':
-                plt.plot(sub['n'], sub['gflops_percentage'], label=name, color='red', linestyle='-', marker='o')
-            else:
-                plt.plot(sub['n'], sub['gflops_percentage'], label=name, linestyle='-', marker='o')
-    plt.legend()
-    plt.xlabel('n')
-    plt.ylabel('gflops(%)')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("picture/G_rev_fusing_avx512_my_3_lowGHz_per_{}.png".format(k))
-    plt.close()
+# for k in k_rev_fusing_avx512_my_3_lowGHz:
+#     plt.figure(figsize=(8, 6))
+#     for name in Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"].unique():
+#         sub = Groupmean_data_fusing_avx512_my_3_lowGHz_mean[(Groupmean_data_fusing_avx512_my_3_lowGHz_mean["name"] == name) & (Groupmean_data_fusing_avx512_my_3_lowGHz_mean['k'] == k)]
+#         if not sub.empty:
+#             if name == '4x3':
+#                 plt.plot(sub['n'], sub['gflops_percentage'], label=name, color='red', linestyle='-', marker='o')
+#             else:
+#                 plt.plot(sub['n'], sub['gflops_percentage'], label=name, linestyle='-', marker='o')
+#     plt.legend()
+#     plt.xlabel('n')
+#     plt.ylabel('gflops(%)')
+#     plt.grid(True)
+#     plt.tight_layout()
+#     plt.savefig("picture/G_rev_fusing_avx512_my_3_lowGHz_per_{}.png".format(k))
+#     plt.close()
     
     
     
