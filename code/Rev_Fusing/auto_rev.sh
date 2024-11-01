@@ -19,7 +19,7 @@ three_6=(3 6)
 n_3_6=(1152 1536 2304 2688 3072 3840 4608)
 
 # n_100=(1000 11000 1200 1300 1400 1500 1600 1700 1800 1900 2000 2100 22)
-n_200=($(seq 1000 200 5000))
+n_200=($(seq 1000 100 5000))
 
 
 # rm -f result.txt
@@ -238,47 +238,47 @@ n_200=($(seq 1000 200 5000))
     
 # done
 
-# rm -f result_avx512_fma_my_3.txt
-# for ((i=0;i<14;i+=2));do
-#     y="${three_mv[i]}"
-#     x="${three_mv[i+1]}"
-#     python3 auto_avx512.py "$y" "$x"
-#     # gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
-#     gcc-13 -O3 -march=znver4   wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
-
-#     for n in "${n_200[@]}"; do
-#         for k in "${ks[@]}"; do
-#                 # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
-#                 # OMP_PROC_BIND=close OMP_PLACES=cores 
-#                OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" >> result_avx512_fma_my_3.txt
-#                 done
-#                 sleep 1
-#         done
-        
-# done
-
-rm -f result_analysis_my_3.txt
-for ((i=0; i<14; i+=2)); do
+rm -f result_avx512_fma_my_3.txt
+for ((i=0;i<14;i+=2));do
     y="${three_mv[i]}"
     x="${three_mv[i+1]}"
     python3 auto_avx512.py "$y" "$x"
-    gcc-13 -O3 -march=znver4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+    # gcc -O3 -march=x86-64-v4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+    gcc-13 -O3 -march=znver4  -funroll-loops  wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp   -lm
 
-    for n in "${nd[@]}"; do
+    for n in "${n_200[@]}"; do
         for k in "${ks[@]}"; do
-            OMP_NUM_THREADS=8 OMP_PROC_BIND=close OMP_PLACES=cores \
-            perf stat -e cycles,instructions,cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
-            -o perf_output.txt --append ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" > wave_output.txt
-            
-            echo "n=${n}, k=${k}, y=${y}, x=${x}" >> result_analysis_my_3.txt
-            grep "GFLOPS" wave_output.txt >> result_analysis_my_3.txt
-            cat perf_output.txt >> result_analysis_my_3.txt
-
-            rm -f wave_output.txt perf_output.txt
-            sleep 1
+                # OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 
+                # OMP_PROC_BIND=close OMP_PLACES=cores 
+               OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" >> result_avx512_fma_my_3.txt
+                done
+                # sleep 1
         done
-    done
+        
 done
+
+# rm -f result_analysis_my_3.txt
+# for ((i=0; i<14; i+=2)); do
+#     y="${three_mv[i]}"
+#     x="${three_mv[i+1]}"
+#     python3 auto_avx512.py "$y" "$x"
+#     gcc-13 -O3 -march=znver4 wave_rev_auto.c -o wave_rev_auto apply_rev_avx.c -fopenmp -lm
+
+#     for n in "${nd[@]}"; do
+#         for k in "${ks[@]}"; do
+#             OMP_NUM_THREADS=8 OMP_PROC_BIND=close OMP_PLACES=cores \
+#             perf stat -e cycles,instructions,cache-references,cache-misses,L1-dcache-loads,L1-dcache-load-misses \
+#             -o perf_output.txt --append ./wave_rev_auto "${n}" "${k}" "${y}" "${x}" > wave_output.txt
+            
+#             echo "n=${n}, k=${k}, y=${y}, x=${x}" >> result_analysis_my_3.txt
+#             grep "GFLOPS" wave_output.txt >> result_analysis_my_3.txt
+#             cat perf_output.txt >> result_analysis_my_3.txt
+
+#             rm -f wave_output.txt perf_output.txt
+#             sleep 1
+#         done
+#     done
+# done
 
 
 
