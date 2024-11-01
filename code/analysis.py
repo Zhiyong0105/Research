@@ -125,7 +125,7 @@ k_rev_fusig_avx256_intel = Groupmean_data_fusing_av256_intel_mean['k'].unique()
 k_rev_fusig_avx256_intel = set(k_rev_fusig_avx256_intel)
 
 linestyles = ['-', '--', '-.', ':']
-colors = ['blue', 'orange', 'green', 'purple']
+colors = ['blue', 'orange', 'green', 'purple','red']
 
 for k in k_rev_fusig_avx256_intel:
     plt.figure(figsize=(12, 8))
@@ -173,28 +173,28 @@ for k in k_rev_fusig_avx256_intel:
 selected_names = ['3X1', '3X2', '3X3', '3X6']
 
 
-# for k in k_rev_fusing_avx512_fma_my_3:
-#     plt.figure(figsize=(12, 8))
-#     for i, name in enumerate(selected_names):
-#         sub = Groupmean_data_fusing_avx512_fma_my_3_mean[
-#             (Groupmean_data_fusing_avx512_fma_my_3_mean["name"] == name) & 
-#             (Groupmean_data_fusing_avx512_fma_my_3_mean['k'] == k)
-#         ]
-#         if not sub.empty:
-#             linestyle = linestyles[i % len(linestyles)]
-#             color = colors[i % len(colors)]
-#             plt.plot(sub['n'], sub['gflops'], label=name, linestyle=linestyle, color=color, marker='o', markersize=3, alpha=0.8)
+for k in k_rev_fusing_avx512_fma_my_3:
+    plt.figure(figsize=(12, 8))
+    for i, name in enumerate(selected_names):
+        sub = Groupmean_data_fusing_avx512_fma_my_3_mean[
+            (Groupmean_data_fusing_avx512_fma_my_3_mean["name"] == name) & 
+            (Groupmean_data_fusing_avx512_fma_my_3_mean['k'] == k)
+        ]
+        if not sub.empty:
+            linestyle = linestyles[i % len(linestyles)]
+            color = colors[i % len(colors)]
+            plt.plot(sub['n'], sub['gflops'], label=name, linestyle=linestyle, color=color, marker='o', markersize=3, alpha=0.8)
     
-#     plt.legend(loc='upper left', ncol=2, fontsize='small')
-#     plt.xlabel('n')
-#     plt.ylabel('gflops')
-#     plt.grid(which='both', linestyle='--', linewidth=0.5)
-#     plt.xticks(range(1000, 5001, 1000))
-#     # plt.ylim(150, 290)
-#     plt.tight_layout()
+    plt.legend(loc='upper left', ncol=2, fontsize='small')
+    plt.xlabel('n')
+    plt.ylabel('gflops')
+    plt.grid(which='both', linestyle='--', linewidth=0.5)
+    plt.xticks(range(1000, 5001, 1000))
+    # plt.ylim(150, 290)
+    plt.tight_layout()
     
-#     plt.savefig(f"picture/G_rev_fusing_avx512_fma_my_3_amd_{k}.png", dpi=300)
-#     plt.close()
+    plt.savefig(f"picture/G_rev_fusing_avx512_fma_my_3_amd_{k}.png", dpi=300)
+    plt.close()
 
 
 # for k in k_rev_fusing_avx256_my_3_amd:

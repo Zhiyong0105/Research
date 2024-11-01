@@ -19,7 +19,7 @@ three_6=(3 6)
 n_3_6=(1152 1536 2304 2688 3072 3840 4608)
 
 myxmv_256=(2 3 2 4 3 2 3 3 4 2)
-n_200=($(seq 1000 200 5000))
+n_100=($(seq 1000 200 5000))
 
 
 
@@ -115,51 +115,31 @@ n_200=($(seq 1000 200 5000))
 rm -f ../data/result_rev_fusing_avx256_intel.txt
 rm -f ../data/result_analysis_avx256_intel.txt
 
-# for ((i=0; i<10; i+=2)); do
-#     y="${myxmv_256[i]}"
-#     x="${myxmv_256[i+1]}"
-#     python3 rev_fusing.py "$y" "$x"
-    
-    
-#     gcc -O3 -march=native rev_fusing.c -o rev_fusing apply_rev_avx.c -fopenmp -lm
-
-    
-#     for n in "${nd[@]}"; do
-#         for k in "${ks[@]}"; do
-           
-#             OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores \
-#            sudo perf stat -M TopdownL1 -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
-            
-            
-#             echo "n=${n}, k=${k}, my=${y}, mv=${x}" >> ../data/result_analysis_avx256_intel.txt
-#             cat perf_output.txt >> ../data/result_analysis_avx256_intel.txt
-#             rm -f perf_output.txt  
-#         done
-#     done
-# done
 for ((i=0; i<10; i+=2)); do
     y="${myxmv_256[i]}"
     x="${myxmv_256[i+1]}"
     python3 rev_fusing.py "$y" "$x"
-    gcc -O3 -march=native rev_fusing.c -o rev_fusing apply_rev_avx.c -fopenmp -lm
+    
+    
+    # gcc -O2 -march=native  -fopenmp -funroll-loops rev_fusing.c  -o rev_fusing apply_rev_avx.c  -lm
+     gcc -O3 -march=native -funroll-loops   -fopenmp   rev_fusing.c apply_rev_avx.c -o rev_fusing -lm
 
-    for n in "${nd[@]}"; do
+
+    
+    for n in "${n_100[@]}"; do
         for k in "${ks[@]}"; do
-            # 设置 OpenMP 环境变量并执行 perf 统计，结果写入临时文件 perf_output.txt
-            OMP_NUM_THREADS=8 OMP_PLACES=0:8:2 \
-            sudo perf stat -M TopdownL1 -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
+           
+            # OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores \
+            # sudo perf stat -M tma_backend_bound_group -o perf_output.txt --append ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
+            OMP_NUM_THREADS=8  OMP_PROC_BIND=close OMP_PLACES=cores ./rev_fusing "${n}" "${k}" "${y}" "${x}" >> ../data/result_rev_fusing_avx256_intel.txt
             
-            # 提取第一行的 tma_backend_bound 数据
-            tma_backend_bound=$(grep "tma_backend_bound" perf_output.txt | head -n 1 | awk '{print $4}')
-
-            # 将当前 n, k, y, x 参数组合和 tma_backend_bound 结果追加到 result_analysis_avx256_intel.txt
-            echo "n=${n}, k=${k}, y=${y}, x=${x}, tma_backend_bound=${tma_backend_bound}%" >> ../data/result_analysis_avx256_intel.txt
-
-            # 清除临时文件
-            rm -f perf_output.txt
+            # echo "n=${n}, k=${k}, my=${y}, mv=${x}" >> ../data/result_analysis_avx256_intel.txt
+            # cat perf_output.txt >> ../data/result_analysis_avx256_intel.txt
+            # rm -f perf_output.txt  
         done
     done
 done
+
 
 # rm -f result_avx512_my_3.txt
 # for ((i=0;i<14;i+=2));do

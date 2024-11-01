@@ -179,7 +179,7 @@ void copy_seq_avx256(int m, int n, double *V, double *tmp, int ldv, int i)
     int count = 0;
     for (int y = 0; y < n; y++)
     {
-        _mm_prefetch((const char *)&V[i + y * ldv], _MM_HINT_T0);
+        // _mm_prefetch((const char *)&V[i + y * ldv], _MM_HINT_T0);
         for (int j = 0; j < m; j += 4)
         {
             __m256d data = _mm256_load_pd(&V[i + y * ldv + j]);
@@ -195,7 +195,7 @@ void recover_seq_avx256(int m, int n, double *V, double *V_seq, int ldv, int i)
     int count = 0;
     for (int y = 0; y < n; y++)
     {
-        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
+        // _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
         for (int j = 0; j < m; j += 4)
         {
             __m256d data = _mm256_load_pd(&V_seq[count + j]);
@@ -213,7 +213,7 @@ void creat_left_seq_avx256(int m, int n, double *V, double *V_left, int ldv, int
     for (int y = 0; y < n; y++)
     {
         int base_index = y * ldv + i;
-        _mm_prefetch((const char *)&V[base_index], _MM_HINT_T0);
+        // _mm_prefetch((const char *)&V[base_index], _MM_HINT_T0);
         for (int j = 0; j < m_left; j += 4)
         {
             __m256d data = _mm256_load_pd(&V[base_index + j]);
@@ -231,7 +231,7 @@ void recover_seq_left_avx256(int m, int n, double *V, double *V_seq, int ldv, in
     for (int y = 0; y < n; y++)
     {
         int base_index = y * ldv + i;
-        _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
+        // _mm_prefetch((const char *)&V_seq[count], _MM_HINT_T0);
         for (int j = 0; j < m_left; j += 4)
         {
             __m256d data = _mm256_load_pd(&V_seq[count + j]);
@@ -250,6 +250,8 @@ void apply_rev_avx256_auto_mv_seq_ALL(int K, int m, int n, double *G, double *V,
     int M = m_iter * (mv * 4);
     double *v_seq = (double *)_mm_malloc(sizeof(double) * (mv * 4) * n, 64);
     double *v_seq_left = (double *)_mm_malloc(sizeof(double) * (mv * 4) * n, 64);
+    // double *v_seq __attribute__((aligned(32))) = (double *)_mm_malloc(sizeof(double) * (mv * 4) * n, 64);
+    // double *v_seq_left __attribute__((aligned(32))) = (double *)_mm_malloc(sizeof(double) * (mv * 4) * n, 64);
 
     for (int i = 0; i < M; i += (mv * 4))
     {
